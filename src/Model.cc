@@ -28,24 +28,50 @@ Model::Model(KWin::EffectWindow* window)
 {
 }
 
-static Direction realizeDirection(const KWin::EffectWindow* window)
+// Mirrors KDE's own Magic Lamp logic exactly:
+// 1. Find panel via intersects() — Plasma sometimes publishes icon geometry
+//    slightly larger than the panel, so contains() misses it.
+// 2. Use clientArea(ScreenArea, window) — the WINDOW's screen center — to
+//    determine direction. This correctly handles cross-screen icons: even if
+//    the icon is on a different screen, comparing to the window's screen
+//    center always gives the right direction.
+static Direction realizeDirection(const KWin::EffectWindow* window, const QRectF& iconRect)
 {
-    const QRectF iconRect = window->iconGeometry();
+    KWin::EffectWindow* panel = nullptr;
+    for (KWin::EffectWindow* candidate : KWin::effects->stackingOrder()) {
+        if (!candidate->isDock()) {
+            continue;
+        }
+        if (candidate->frameGeometry().intersects(iconRect)) {
+            panel = candidate;
+            break;
+        }
+    }
 
-    // Determine which screen the icon (taskbar button) lives on, then check
-    // which edge of that screen the icon touches. This avoids the unreliable
-    // cross-screen correction that broke multi-monitor setups in KWin 6.
+    if (panel) {
+        const QRectF windowScreen = KWin::effects->clientArea(KWin::ScreenArea, window);
+        if (panel->frameGeometry().width() >= panel->frameGeometry().height()) {
+            return iconRect.center().y() <= windowScreen.center().y()
+                ? Direction::Top : Direction::Bottom;
+        } else {
+            return iconRect.center().x() <= windowScreen.center().x()
+                ? Direction::Left : Direction::Right;
+        }
+    }
+
+    // No panel found — fall back to closest screen edge (KDE uses ScreenArea intersect here).
     KWin::LogicalOutput* screen = KWin::effects->screenAt(iconRect.center().toPoint());
     KWin::VirtualDesktop* desktop = KWin::effects->currentDesktop();
-    const QRectF screenRect = KWin::effects->clientArea(KWin::ScreenArea, screen, desktop);
-    const QRectF constrainedRect = screenRect.intersected(iconRect);
-
-    if (qFuzzyIsNull(constrainedRect.left() - screenRect.left()))
-        return Direction::Left;
-    if (qFuzzyIsNull(constrainedRect.top() - screenRect.top()))
-        return Direction::Top;
-    if (qFuzzyIsNull(constrainedRect.right() - screenRect.right()))
-        return Direction::Right;
+    const QRectF screenRect = KWin::effects->clientArea(KWin::FullScreenArea, screen, desktop);
+    const QPointF c = iconRect.center();
+    const qreal l = qAbs(c.x() - screenRect.left());
+    const qreal t = qAbs(c.y() - screenRect.top());
+    const qreal r = qAbs(screenRect.right()  - c.x());
+    const qreal b = qAbs(screenRect.bottom() - c.y());
+    const qreal m = qMin(qMin(l, t), qMin(r, b));
+    if (qFuzzyCompare(l, m)) return Direction::Left;
+    if (qFuzzyCompare(t, m)) return Direction::Top;
+    if (qFuzzyCompare(r, m)) return Direction::Right;
     return Direction::Bottom;
 }
 
@@ -58,7 +84,10 @@ void Model::start(AnimationKind kind)
         return;
     }
 
-    m_direction = realizeDirection(m_window);
+    if (!m_iconGeometry.isValid()) {
+        m_iconGeometry = m_window->iconGeometry();
+    }
+    m_direction = realizeDirection(m_window, m_iconGeometry);
     m_bumpDistance = computeBumpDistance();
     m_shapeFactor = computeShapeFactor();
 
@@ -200,6 +229,7 @@ bool Model::done() const
 struct TransformParameters {
     QEasingCurve shapeCurve;
     Direction direction;
+    QRectF iconRect;
     qreal stretchProgress;
     qreal squashProgress;
     qreal bumpProgress;
@@ -216,7 +246,7 @@ static void transformQuadsLeft(
     const TransformParameters& params,
     KWin::WindowQuadList& quads)
 {
-    const QRectF iconRect = window->iconGeometry();
+    const QRectF iconRect = params.iconRect;
     const QRectF windowRect = window->frameGeometry();
 
     const qreal distance = windowRect.right() - iconRect.right() + params.bumpDistance;
@@ -255,7 +285,7 @@ static void transformQuadsTop(
     const TransformParameters& params,
     KWin::WindowQuadList& quads)
 {
-    const QRectF iconRect = window->iconGeometry();
+    const QRectF iconRect = params.iconRect;
     const QRectF windowRect = window->frameGeometry();
 
     const qreal distance = windowRect.bottom() - iconRect.bottom() + params.bumpDistance;
@@ -294,7 +324,7 @@ static void transformQuadsRight(
     const TransformParameters& params,
     KWin::WindowQuadList& quads)
 {
-    const QRectF iconRect = window->iconGeometry();
+    const QRectF iconRect = params.iconRect;
     const QRectF windowRect = window->frameGeometry();
 
     const qreal distance = iconRect.left() - windowRect.left() + params.bumpDistance;
@@ -333,7 +363,7 @@ static void transformQuadsBottom(
     const TransformParameters& params,
     KWin::WindowQuadList& quads)
 {
-    const QRectF iconRect = window->iconGeometry();
+    const QRectF iconRect = params.iconRect;
     const QRectF windowRect = window->frameGeometry();
 
     const qreal distance = iconRect.top() - windowRect.top() + params.bumpDistance;
@@ -420,6 +450,7 @@ void Model::applyBump(KWin::WindowQuadList& quads) const
     TransformParameters params;
     params.shapeCurve = m_parameters.shapeCurve;
     params.direction = m_direction;
+    params.iconRect = m_iconGeometry;
     params.squashProgress = 0.0;
     params.stretchProgress = 0.0;
     params.bumpProgress = m_timeLine.value();
@@ -432,6 +463,7 @@ void Model::applyStretch1(KWin::WindowQuadList& quads) const
     TransformParameters params;
     params.shapeCurve = m_parameters.shapeCurve;
     params.direction = m_direction;
+    params.iconRect = m_iconGeometry;
     params.squashProgress = 0.0;
     params.stretchProgress = m_shapeFactor * m_timeLine.value();
     params.bumpProgress = 1.0;
@@ -444,6 +476,7 @@ void Model::applyStretch2(KWin::WindowQuadList& quads) const
     TransformParameters params;
     params.shapeCurve = m_parameters.shapeCurve;
     params.direction = m_direction;
+    params.iconRect = m_iconGeometry;
     params.squashProgress = 0.0;
     params.stretchProgress = m_shapeFactor * m_timeLine.value();
     params.bumpProgress = params.stretchProgress;
@@ -456,6 +489,7 @@ void Model::applySquash(KWin::WindowQuadList& quads) const
     TransformParameters params;
     params.shapeCurve = m_parameters.shapeCurve;
     params.direction = m_direction;
+    params.iconRect = m_iconGeometry;
     params.squashProgress = m_timeLine.value();
     params.stretchProgress = qMin(m_shapeFactor + params.squashProgress, 1.0);
     params.bumpProgress = 1.0;
@@ -481,6 +515,12 @@ KWin::EffectWindow* Model::window() const
 void Model::setWindow(KWin::EffectWindow* window)
 {
     m_window = window;
+    m_iconGeometry = QRectF(); // reset so start() re-reads from window or override
+}
+
+void Model::setIconGeometry(const QRectF& rect)
+{
+    m_iconGeometry = rect;
 }
 
 bool Model::needsClip() const
@@ -490,7 +530,7 @@ bool Model::needsClip() const
 
 QRegion Model::clipRegion() const
 {
-    const QRectF iconRect = m_window->iconGeometry();
+    const QRectF iconRect = m_iconGeometry;
     QRectF clipRect = m_window->expandedGeometry();
 
     switch (m_direction) {
@@ -532,7 +572,7 @@ QRegion Model::clipRegion() const
 int Model::computeBumpDistance() const
 {
     const QRectF windowRect = m_window->frameGeometry();
-    const QRectF iconRect = m_window->iconGeometry();
+    const QRectF iconRect = m_iconGeometry;
 
     qreal bumpDistance = 0;
     switch (m_direction) {
@@ -564,7 +604,7 @@ int Model::computeBumpDistance() const
 qreal Model::computeShapeFactor() const
 {
     const QRectF windowRect = m_window->frameGeometry();
-    const QRectF iconRect = m_window->iconGeometry();
+    const QRectF iconRect = m_iconGeometry;
 
     int movingExtent = 0;
     int distanceToIcon = 0;

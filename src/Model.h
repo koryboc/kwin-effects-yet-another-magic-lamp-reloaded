@@ -111,6 +111,12 @@ public:
     void setWindow(KWin::EffectWindow* window);
 
     /**
+     * Overrides the icon geometry used for the animation target.
+     * Call before start() to use a different target than iconGeometry().
+     **/
+    void setIconGeometry(const QRectF& rect);
+
+    /**
      * Returns whether the painted result has to be clipped.
      *
      * @see clipRegion
@@ -146,6 +152,7 @@ private:
     };
 
     KWin::EffectWindow* m_window;
+    QRectF m_iconGeometry;
     AnimationKind m_kind;
     AnimationStage m_stage;
     KWin::TimeLine m_timeLine;

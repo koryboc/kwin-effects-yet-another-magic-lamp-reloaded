@@ -31,6 +31,186 @@
 // std
 #include <cmath>
 
+
+// Returns which screen edge a dock panel is closest to.
+static Direction dockEdge(KWin::EffectWindow* dock)
+{
+    KWin::VirtualDesktop* desktop = KWin::effects->currentDesktop();
+    KWin::LogicalOutput* screen = KWin::effects->screenAt(
+        dock->frameGeometry().center().toPoint());
+    const QRectF screenRect = KWin::effects->clientArea(
+        KWin::FullScreenArea, screen, desktop);
+    const QPointF c = dock->frameGeometry().center();
+
+    const qreal l = qAbs(c.x() - screenRect.left());
+    const qreal t = qAbs(c.y() - screenRect.top());
+    const qreal r = qAbs(screenRect.right()  - c.x());
+    const qreal b = qAbs(screenRect.bottom() - c.y());
+    const qreal m = qMin(qMin(l, t), qMin(r, b));
+
+    if (qFuzzyCompare(l, m)) return Direction::Left;
+    if (qFuzzyCompare(t, m)) return Direction::Top;
+    if (qFuzzyCompare(r, m)) return Direction::Right;
+    return Direction::Bottom;
+}
+
+// Returns the icon geometry on the screen that contains the window's center.
+// When iconGeometry() points to a panel on a different screen (race condition
+// with multiple task managers writing _NET_WM_ICON_GEOMETRY), the icon is
+// remapped to the correct screen.
+//
+// Screen identity is determined via dock window pointers (always in global
+// coordinates) rather than screenAt(iconRect.center()), which is unreliable
+// when iconGeometry() uses screen-local coordinates (as on Wayland).
+// When the target screen has multiple panels, the panel on the same screen
+// edge as the source panel is preferred (picks task bar over status bar).
+// Position is translated by the screen-origin offset so that an icon at local
+// position (x, y) within the source panel maps to the same local position in
+// the target panel — exact for identical panel layouts, reasonable otherwise.
+static QRectF resolveIconGeometry(KWin::EffectWindow* w)
+{
+    const QRectF iconRect = w->iconGeometry();
+
+    // Window center determines the authoritative screen (robust against decorations
+    // extending a few pixels into an adjacent screen).
+    KWin::LogicalOutput* primaryScreen = KWin::effects->screenAt(
+        w->frameGeometry().center().toPoint());
+    if (!primaryScreen) {
+        return iconRect;
+    }
+
+    // Find which dock (panel) the iconGeometry falls into.
+    // Dock frameGeometry is always in global coordinates, making this reliable
+    // regardless of whether iconGeometry itself uses global or screen-local coords.
+    KWin::EffectWindow* sourceDock = nullptr;
+    for (KWin::EffectWindow* candidate : KWin::effects->stackingOrder()) {
+        if (!candidate->isDock()) {
+            continue;
+        }
+        // Use intersects, not contains: Plasma sometimes publishes icon geometry
+        // slightly larger than the panel (KDE's own Magic Lamp has the same note).
+        if (candidate->frameGeometry().intersects(iconRect)) {
+            sourceDock = candidate;
+            break;
+        }
+    }
+
+    // If the dock containing the icon is already on the primary screen, the
+    // iconGeometry is correct — use it directly.
+    if (sourceDock) {
+        KWin::LogicalOutput* sourceDockScreen = KWin::effects->screenAt(
+            sourceDock->frameGeometry().center().toPoint());
+        if (sourceDockScreen == primaryScreen) {
+            return iconRect;
+        }
+    }
+
+    // Icon is on the wrong screen. Find the best-matching dock on primaryScreen:
+    // prefer the dock on the same edge as the source (so we pick the task bar,
+    // not an unrelated status bar on screens with multiple panels).
+    // Determine which edge of the target screen the task-manager panel is on.
+    // Strategy: use screen-adjacency to mirror the source panel's relative position.
+    //   - Find which edge of the source screen faces the target screen (srcFacingEdge).
+    //   - Find which edge of the target screen faces the source screen (tgtFacingEdge).
+    //   - If source panel is on srcFacingEdge  → target panel is on tgtFacingEdge.
+    //   - If source panel is on the opposite edge (non-facing) → target panel is on
+    //     the opposite of tgtFacingEdge (i.e. the non-facing edge of the target screen).
+    //
+    // Example: upper screen (source) has task bar at TOP (non-facing, away from lower screen).
+    //   srcFacingEdge=Bottom, tgtFacingEdge=Top, sourceDockEdge=Top ≠ Bottom
+    //   → preferredEdge = opposite(Top) = Bottom  → picks the BOTTOM panel of lower screen ✓
+    Direction preferredEdge = Direction::Bottom;
+    if (sourceDock) {
+        KWin::VirtualDesktop* desktop = KWin::effects->currentDesktop();
+        KWin::LogicalOutput* srcScreen = KWin::effects->screenAt(
+            sourceDock->frameGeometry().center().toPoint());
+        const QRectF srcRect = KWin::effects->clientArea(KWin::FullScreenArea, srcScreen, desktop);
+        const QRectF tgtRect = KWin::effects->clientArea(KWin::FullScreenArea, primaryScreen, desktop);
+
+        const auto closestEdge = [](const QRectF& rect, const QPointF& p) -> Direction {
+            const qreal l = qAbs(p.x() - rect.left());
+            const qreal t = qAbs(p.y() - rect.top());
+            const qreal r = qAbs(rect.right()  - p.x());
+            const qreal b = qAbs(rect.bottom() - p.y());
+            const qreal m = qMin(qMin(l, t), qMin(r, b));
+            if (qFuzzyCompare(l, m)) return Direction::Left;
+            if (qFuzzyCompare(t, m)) return Direction::Top;
+            if (qFuzzyCompare(r, m)) return Direction::Right;
+            return Direction::Bottom;
+        };
+        const auto opposite = [](Direction d) -> Direction {
+            switch (d) {
+            case Direction::Top:    return Direction::Bottom;
+            case Direction::Bottom: return Direction::Top;
+            case Direction::Left:   return Direction::Right;
+            default:                return Direction::Left;
+            }
+        };
+
+        const Direction srcFacingEdge  = closestEdge(srcRect, tgtRect.center());
+        const Direction tgtFacingEdge  = closestEdge(tgtRect, srcRect.center());
+        const Direction sourceDockEdge = dockEdge(sourceDock);
+        preferredEdge = (sourceDockEdge == srcFacingEdge) ? tgtFacingEdge : opposite(tgtFacingEdge);
+    }
+
+    KWin::EffectWindow* targetDock = nullptr;
+    KWin::EffectWindow* fallbackDock = nullptr;
+    for (KWin::EffectWindow* candidate : KWin::effects->stackingOrder()) {
+        if (!candidate->isDock()) {
+            continue;
+        }
+        if (KWin::effects->screenAt(candidate->frameGeometry().center().toPoint()) != primaryScreen) {
+            continue;
+        }
+        if (dockEdge(candidate) == preferredEdge) {
+            targetDock = candidate;
+            break;
+        }
+        if (!fallbackDock) {
+            fallbackDock = candidate;
+        }
+    }
+    if (!targetDock) {
+        targetDock = fallbackDock;
+    }
+    if (!targetDock) {
+        return iconRect;
+    }
+
+    // Translate the icon by the offset between the two screens' origins so that
+    // a button at local position (lx, ly) within the source panel appears at the
+    // same local position within the target panel.
+    // Falls back to dock center when sourceDock is unknown.
+    if (!sourceDock) {
+        const QRectF tgt = targetDock->frameGeometry();
+        return QRectF(tgt.center().x() - iconRect.width() / 2,
+                      tgt.center().y() - iconRect.height() / 2,
+                      iconRect.width(), iconRect.height());
+    }
+
+    KWin::VirtualDesktop* desktop = KWin::effects->currentDesktop();
+    KWin::LogicalOutput* sourceDockScreen = KWin::effects->screenAt(
+        sourceDock->frameGeometry().center().toPoint());
+    const QRectF srcScreenRect = KWin::effects->clientArea(
+        KWin::FullScreenArea, sourceDockScreen, desktop);
+    const QRectF tgtScreenRect = KWin::effects->clientArea(
+        KWin::FullScreenArea, primaryScreen, desktop);
+
+    const QPointF screenOffset = tgtScreenRect.topLeft() - srcScreenRect.topLeft();
+    const QRectF translatedRect = iconRect.translated(screenOffset);
+
+    // Clamp to the target dock so the icon stays within the panel.
+    const QRectF tgt = targetDock->frameGeometry();
+    const qreal cx = qBound(tgt.left() + iconRect.width()  / 2,
+                            translatedRect.center().x(),
+                            tgt.right()  - iconRect.width()  / 2);
+    const qreal cy = qBound(tgt.top()  + iconRect.height() / 2,
+                            translatedRect.center().y(),
+                            tgt.bottom() - iconRect.height() / 2);
+    return QRectF(cx - iconRect.width() / 2, cy - iconRect.height() / 2,
+                  iconRect.width(), iconRect.height());
+}
+
 enum ShapeCurve {
     Linear = 0,
     Quad = 1,
@@ -255,6 +435,7 @@ void YetAnotherMagicLampEffect::startMinimize(KWin::EffectWindow* w)
     AnimationData& animData = m_animations[w];
     animData.model.setWindow(w);
     animData.model.setParameters(m_modelParameters);
+    animData.model.setIconGeometry(resolveIconGeometry(w));
     animData.model.start(Model::AnimationKind::Minimize);
     animData.visibleRef = KWin::EffectWindowVisibleRef(w, KWin::EffectWindow::PAINT_DISABLED_BY_MINIMIZE);
 
@@ -277,6 +458,7 @@ void YetAnotherMagicLampEffect::startUnminimize(KWin::EffectWindow* w)
     AnimationData& animData = m_animations[w];
     animData.model.setWindow(w);
     animData.model.setParameters(m_modelParameters);
+    animData.model.setIconGeometry(resolveIconGeometry(w));
     animData.model.start(Model::AnimationKind::Unminimize);
 
     redirect(w);
