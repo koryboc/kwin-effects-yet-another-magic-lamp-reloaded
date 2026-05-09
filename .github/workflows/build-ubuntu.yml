@@ -13,9 +13,10 @@ jobs:
 
     steps:
       - name: Update system
-        run: apt update
+        run: apt update && apt install -y bash
 
       - name: Check KWin version
+        shell: bash
         run: |
           version=$(apt-cache policy kwin-dev | grep Candidate | grep -oP '\d+\.\d+' | head -1)
           major=$(echo "$version" | cut -d. -f1)
