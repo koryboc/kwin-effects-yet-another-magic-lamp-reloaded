@@ -15,17 +15,32 @@ jobs:
       - name: Update system
         run: apt update
 
+      - name: Check KWin version
+        run: |
+          version=$(apt-cache policy kwin-dev | grep Candidate | grep -oP '\d+\.\d+' | head -1)
+          major=$(echo "$version" | cut -d. -f1)
+          minor=$(echo "$version" | cut -d. -f2)
+          echo "Available kwin-dev: $version"
+          if [[ -z "$major" ]] || [[ "$major" -lt 6 ]] || { [[ "$major" -eq 6 ]] && [[ "$minor" -lt 6 ]]; }; then
+            echo "KWin $version does not meet the minimum requirement of 6.6, skipping build."
+            echo "skip=true" >> "$GITHUB_ENV"
+          fi
+
       - name: Install dependencies
+        if: env.skip != 'true'
         run: apt install -y
           build-essential cmake extra-cmake-modules kwin-dev libkf6config-dev
           libkf6configwidgets-dev libkf6coreaddons-dev libkf6kcmutils-dev
           libkf6windowsystem-dev qt6-base-dev libdrm-dev
 
       - name: Checkout
+        if: env.skip != 'true'
         uses: actions/checkout@v4
 
       - name: Configure
+        if: env.skip != 'true'
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
 
       - name: Build
+        if: env.skip != 'true'
         run: cmake --build build --parallel
