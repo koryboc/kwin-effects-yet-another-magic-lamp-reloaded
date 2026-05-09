@@ -36,7 +36,7 @@ You will need the following dependencies to build this effect:
 On Arch Linux
 
 ```sh
-sudo pacman -S cmake extra-cmake-modules kwin qt6-base \
+sudo pacman -S base-devel cmake extra-cmake-modules kwin qt6-base \
     kcmutils kconfig kconfigwidgets kcoreaddons kwindowsystem libdrm
 ```
 
@@ -45,13 +45,17 @@ On Fedora
 ```sh
 sudo dnf install cmake extra-cmake-modules kf6-kconfig-devel \
     kf6-kconfigwidgets-devel kf6-kcoreaddons-devel kf6-kcmutils-devel \
-    kf6-kwindowsystem-devel kwin-devel qt6-qtbase-devel libdrm-devel
+    kf6-kwindowsystem-devel kwin-devel qt6-qtbase-devel libdrm-devel libepoxy-devel
 ```
 
-On Debian
+On Debian (untested)
+
+> **Note:** This effect requires KWin 6.6 or later. As of writing, Ubuntu 25.04 ships KWin 6.3,
+> which is not compatible. Building on Debian-based distributions may fail until a sufficiently
+> recent version of `kwin-dev` becomes available.
 
 ```sh
-sudo apt install cmake extra-cmake-modules kwin-dev \
+sudo apt install build-essential cmake extra-cmake-modules kwin-dev \
     libkf6config-dev libkf6configwidgets-dev libkf6coreaddons-dev \
     libkf6kcmutils-dev libkf6windowsystem-dev qt6-base-dev libdrm-dev
 ```
