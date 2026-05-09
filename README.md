@@ -5,67 +5,64 @@
 [Demo](https://www.youtube.com/watch?v=BR4bUwFZDS8)
 
 Yet Another Magic Lamp is a window minimization effect for KWin. Whenever a window
-is minimized, it'll get sucked down into the dock/panel. The main difference
-between this effect and the one shipped with KWin is that this effect is more
-"curvy". In addition to that, this effect works correctly with weird setups
-(e.g. the panel is between screens) and has more configuration options.
+is minimized, it'll get sucked down into the dock/panel. Compared to the Magic Lamp
+effect shipped with KWin, this effect features a smoother, more "curvy" animation,
+improved multi-monitor support (including correct behavior when the panel is on a
+secondary screen or positioned between displays), and more configuration options.
 
-This is mostly eye-candy stuff. If you want to be more productive, consider
-using another window minimize animation (e.g. [Scale](https://store.kde.org/p/1267839/), etc).
+This project was originally created by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp),
+who maintained it through Plasma 5.27. Since the original repository has not been updated in
+several years, this fork continues development independently, focusing exclusively on Wayland
+under Plasma 6. X11 is no longer supported.
 
 ### Installation
-
-#### Binary package
-
-On openSUSE Tumbleweed
-
-```sh
-sudo zypper ar obs://home:trmdi trmdi
-sudo zypper in -r trmdi kwin-effects-yaml
-```
 
 #### Build from source
 
 You will need the following dependencies to build this effect:
 * CMake
 * any C++20 enabled compiler
-* Qt
-* libkwineffects
-* KDE Frameworks 5:
+* Qt 6: Core, DBus, Gui, Widgets
+* KWin (Plasma 6.6 or later)
+* KDE Frameworks 6:
     - Config
+    - ConfigWidgets
     - CoreAddons
     - Extra CMake Modules
+    - KCMUtils
     - WindowSystem
+* libdrm
 
 On Arch Linux
 
 ```sh
-sudo pacman -S cmake extra-cmake-modules kwin
+sudo pacman -S cmake extra-cmake-modules kwin qt6-base \
+    kcmutils kf6-kconfig kf6-kconfigwidgets kf6-coreaddons \
+    kf6-kwindowsystem libdrm
 ```
 
 On Fedora
 
 ```sh
-sudo dnf install cmake extra-cmake-modules kf5-kconfig-devel \
-    kf5-kcoreaddons-devel kf5-kwindowsystem-devel kwin-devel \
-    qt5-qtbase-devel libepoxy-devel kf5-kconfigwidgets-devel
+sudo dnf install cmake extra-cmake-modules kf6-kconfig-devel \
+    kf6-kconfigwidgets-devel kf6-kcoreaddons-devel kf6-kcmutils-devel \
+    kf6-kwindowsystem-devel kwin-devel qt6-qtbase-devel libdrm-devel
 ```
 
-On Ubuntu
+On Debian
 
 ```sh
 sudo apt install cmake extra-cmake-modules kwin-dev \
-    libkf5config-dev libkf5configwidgets-dev libkf5coreaddons-dev \
-    libkf5windowsystem-dev qtbase5-dev
+    libkf6config-dev libkf6configwidgets-dev libkf6coreaddons-dev \
+    libkf6kcmutils-dev libkf6windowsystem-dev qt6-base-dev libdrm-dev
 ```
 
 After you installed all the required dependencies, you can build
 the effect:
 
 ```sh
-git clone https://github.com/zzag/kwin-effects-yet-another-magic-lamp.git
+git clone https://github.com/Si13n7/kwin-effects-yet-another-magic-lamp.git
 cd kwin-effects-yet-another-magic-lamp
-git checkout Plasma/5.23
 mkdir build && cd build
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -77,13 +74,13 @@ sudo make install
 
 #### Building the effect against older Plasma versions
 
-If you want to build this effect against an older Plasma release, checkout
+If you want to build this effect against an older Plasma (5.x) release, checkout
 the corresponding `Plasma/x.yz` branch, for example
 
 ```sh
 git clone https://github.com/zzag/kwin-effects-yet-another-magic-lamp.git
 cd kwin-effects-yet-another-magic-lamp
-git checkout Plasma/5.20
+git checkout Plasma/5.23
 ```
 
 
