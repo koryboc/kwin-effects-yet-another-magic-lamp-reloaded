@@ -1,19 +1,12 @@
 # Yet Another Magic Lamp (Plasma 6.6+)
 
-![Screenshot](doc/Screenshot.png)
+![Screenshot](https://github.com/user-attachments/assets/0235864c-33ad-42b5-9719-ca6abce41fb0)
 
-[Demo](https://www.youtube.com/watch?v=BR4bUwFZDS8)
+[Demo](https://youtu.be/txdNK-soYyY)
 
-Yet Another Magic Lamp is a window minimization effect for KWin. Whenever a window
-is minimized, it'll get sucked down into the dock/panel. Compared to the Magic Lamp
-effect shipped with KWin, this effect features a smoother, more "curvy" animation,
-improved multi-monitor support (including correct behavior when the panel is on a
-secondary screen or positioned between displays), and more configuration options.
+Yet Another Magic Lamp is a window minimization effect for KWin. Whenever a window is minimized, it'll get sucked down into the dock/panel. Compared to the Magic Lamp effect shipped with KWin, this effect features a smoother, more „curvy“ animation and more configuration options. Additionally, this fork improves upon both the built-in effect and the original by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp) with fixed multi-monitor support — correctly identifying the target panel when minimizing, regardless of which screen the window is on or how panels are distributed across displays.
 
-This project was originally created by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp),
-who maintained it through Plasma 5.27. Since the original repository has not been updated in
-several years, this fork continues development independently, focusing exclusively on Wayland
-under Plasma 6. X11 is no longer supported.
+This project was originally created by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), who maintained it through Plasma 5.27. Since the original repository has not been updated in several years, this fork continues development independently, focusing exclusively on Wayland under Plasma 6. X11 is no longer supported.
 
 ### Installation
 
@@ -136,9 +129,7 @@ sudo make install
 
 #### Building the effect against older Plasma versions
 
-This fork targets **Plasma 6.6 and later** exclusively. For older Plasma (5.x) releases,
-use the original repository by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp),
-which provides dedicated branches per Plasma version.
+This fork targets **Plasma 6.6 and later** exclusively. For older Plasma (5.x) releases, use the original repository by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), which provides dedicated branches per Plasma version.
 
 **Step 1** — Clone the original repository:
 
@@ -164,12 +155,8 @@ Open **System Settings** and navigate to:
 
 Select **"Yet Another Magic Lamp"** and click **Apply**.
 
-> **Note:** After changing effect-specific settings (e.g. via the configuration
-> dialog), the changes may not take effect immediately. As a temporary workaround,
-> switch to a different minimize effect, click Apply, then switch back and click
-> Apply again. This behavior will be improved in a future update.
+> **Note:** After changing effect-specific settings (e.g. via the configuration dialog), the changes may not take effect immediately. As a temporary workaround, switch to a different minimize effect, click Apply, then switch back and click Apply again. This behavior will be improved in a future update.
 
 ### Contributing
 
-Contributions are welcome. For suggestions or ideas, please open an issue.
-For code contributions, run `clang-format` before submitting a pull request.
+Contributions are welcome. For suggestions or ideas, please open an issue. For code contributions, run `clang-format` before submitting a pull request.
