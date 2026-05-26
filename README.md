@@ -155,8 +155,6 @@ Open **System Settings** and navigate to:
 
 Select **"Yet Another Magic Lamp"** and click **Apply**.
 
-> **Note:** After changing effect-specific settings (e.g. via the configuration dialog), the changes may not take effect immediately. As a temporary workaround, switch to a different minimize effect, click Apply, then switch back and click Apply again. This behavior will be improved in a future update.
-
 ### Contributing
 
 Contributions are welcome. For suggestions or ideas, please open an issue. For code contributions, run `clang-format` before submitting a pull request.
