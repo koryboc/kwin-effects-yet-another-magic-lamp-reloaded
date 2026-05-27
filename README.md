@@ -1,12 +1,16 @@
 # Yet Another Magic Lamp (Plasma 6.6+)
 
-![Screenshot](https://github.com/user-attachments/assets/0235864c-33ad-42b5-9719-ca6abce41fb0)
+<div align="center">
+  <a href="https://youtu.be/i8tt4JLWGy8">
+    <img src="https://github.com/user-attachments/assets/616a9a82-1fd1-4477-a436-9be6003c80f2" alt="Demo" />
+  </a>
+</div>
 
-[Demo](https://youtu.be/txdNK-soYyY)
+[Demo](https://youtu.be/i8tt4JLWGy8)
 
-Yet Another Magic Lamp is a window minimization effect for KWin. Whenever a window is minimized, it'll get sucked down into the dock/panel. Compared to the Magic Lamp effect shipped with KWin, this effect features a smoother, more „curvy“ animation and more configuration options. Additionally, this fork improves upon both the built-in effect and the original by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp) with fixed multi-monitor support — correctly identifying the target panel when minimizing, regardless of which screen the window is on or how panels are distributed across displays.
+Yet Another Magic Lamp is a window minimization effect for KWin. Whenever a window is minimized, it'll get sucked down into the dock/panel. Compared to the Magic Lamp effect shipped with KWin, this effect features a smoother, more „curvy“ animation and more configuration options. Additionally, this fork improves upon both the built-in effect and the original by [Vlad Zahorodnii](https://github.com/zzag/kwin-effects-yet-another-magic-lamp) with fixed multi-monitor support — correctly identifying the target panel when minimizing, regardless of which screen the window is on or how panels are distributed across displays.
 
-This project was originally created by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), who maintained it through Plasma 5.27. Since the original repository has not been updated in several years, this fork continues development independently, focusing exclusively on Wayland under Plasma 6. X11 is no longer supported.
+This project was originally created by [Vlad Zahorodnii](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), who maintained it through Plasma 5.27. Since the original repository has not been updated in several years, this fork continues development independently, focusing exclusively on Wayland under Plasma 6. X11 is no longer supported.
 
 ### Installation
 
