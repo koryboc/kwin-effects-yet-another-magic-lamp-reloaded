@@ -64,8 +64,7 @@ static Direction realizeDirection(const KWin::EffectWindow* window, const QRectF
 
     // No panel found — fall back to closest screen edge (KDE uses ScreenArea intersect here).
     KWin::LogicalOutput* screen = KWin::effects->screenAt(iconRect.center().toPoint());
-    KWin::VirtualDesktop* desktop = KWin::effects->currentDesktop();
-    const QRectF screenRect = KWin::effects->clientArea(KWin::FullScreenArea, screen, desktop);
+    const QRectF screenRect = KWin::effects->clientArea(KWin::FullScreenArea, screen);
     const QPointF c = iconRect.center();
     const qreal l = qAbs(c.x() - screenRect.left());
     const qreal t = qAbs(c.y() - screenRect.top());
@@ -131,9 +130,9 @@ void Model::start(AnimationKind kind)
     }
 }
 
-void Model::advance(std::chrono::milliseconds presentTime)
+void Model::advance(const KWin::RenderView* view)
 {
-    m_timeLine.advance(presentTime);
+    m_timeLine.advance(view);
     if (!m_timeLine.done()) {
         return;
     }

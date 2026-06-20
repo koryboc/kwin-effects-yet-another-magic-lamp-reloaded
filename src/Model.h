@@ -70,9 +70,9 @@ public:
     void start(AnimationKind kind);
 
     /**
-     * Updates the model to @p milliseconds.
+     * Updates the model using current render timing.
      **/
-    void advance(std::chrono::milliseconds presentTime);
+    void advance(const KWin::RenderView* view);
 
     /**
      * Returns whether the animation is complete.

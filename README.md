@@ -1,4 +1,4 @@
-# Yet Another Magic Lamp (Plasma 6.6+)
+# Yet Another Magic Lamp (Plasma 6.6)
 
 <div align="center">
   <a href="https://youtu.be/i8tt4JLWGy8">
@@ -58,6 +58,7 @@ sudo pacman -S \
     kwindowsystem \
     qt6-base \
     libdrm
+    vulkan-headers
 ```
 
 On Fedora → Kinoite, Bazzite, Nobara
@@ -75,6 +76,7 @@ sudo dnf install \
     qt6-qtbase-devel \
     libdrm-devel \
     libepoxy-devel
+    vulkan-headers
 ```
 
 On openSUSE Tumbleweed
@@ -94,12 +96,16 @@ sudo zypper install \
     qt6-declarative-devel \
     libdrm-devel \
     libepoxy-devel
+    vulkan-headers
 ```
 
 On Debian → Kubuntu, KDE neon, MX Linux, Nitrux
 
-> **Note:** This effect requires KWin 6.6 or later. Building on Debian-based distributions may
+> **Note:** This effect requires KWin 6.6. Building on Debian-based distributions may
 > fail if the KWin version available in the repositories does not meet this requirement.
+>
+> For Plasma versions higher than 6.6, use the `kde/plasma-6.7` branch, as this current branch
+> will not work with 6.6.
 
 ```yaml
 sudo apt install \
@@ -114,6 +120,7 @@ sudo apt install \
     libkf6windowsystem-dev \
     qt6-base-dev \
     libdrm-dev
+    vulkan-headers
 ```
 
 After you installed all the required dependencies, you can build
@@ -133,7 +140,7 @@ sudo make install
 
 #### Building the effect against older Plasma versions
 
-This fork targets **Plasma 6.6 and later** exclusively. For older Plasma (5.x) releases, use the original repository by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), which provides dedicated branches per Plasma version.
+This fork targets **Plasma 6.6** exclusively. For older Plasma (5.x) releases, use the original repository by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), which provides dedicated branches per Plasma version.
 
 **Step 1** — Clone the original repository:
 
