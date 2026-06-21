@@ -75,7 +75,7 @@ sudo dnf install \
     kf6-kwindowsystem-devel \
     qt6-qtbase-devel \
     libdrm-devel \
-    libepoxy-devel
+    libepoxy-devel \
     vulkan-headers
 ```
 
