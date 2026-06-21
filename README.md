@@ -1,4 +1,4 @@
-# Yet Another Magic Lamp (Plasma 6.6)
+# Yet Another Magic Lamp (Plasma 6.7)
 
 <div align="center">
   <a href="https://youtu.be/i8tt4JLWGy8">
@@ -13,17 +13,6 @@ Yet Another Magic Lamp is a window minimization effect for KWin. Whenever a wind
 This project was originally created by [Vlad Zahorodnii](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), who maintained it through Plasma 5.27. Since the original repository has not been updated in several years, this fork continues development independently, focusing exclusively on Wayland under Plasma 6. X11 is no longer supported.
 
 ### Installation
-
-#### Quick install
-
-Clone the repository and run the install script — it will check and install all required dependencies automatically, then build and install the effect.
-
-```yaml
-git clone https://github.com/Si13n7/kwin-effects-yet-another-magic-lamp-reloaded.git
-cd kwin-effects-yet-another-magic-lamp-reloaded
-chmod +x ./install.sh
-./install.sh
-```
 
 Supports Arch Linux, Fedora, openSUSE Tumbleweed, and Debian, as well as most distributions based on these.
 
@@ -101,11 +90,8 @@ sudo zypper install \
 
 On Debian → Kubuntu, KDE neon, MX Linux, Nitrux
 
-> **Note:** This effect requires KWin 6.6. Building on Debian-based distributions may
+> **Note:** This effect requires KWin 6.7. Building on Debian-based distributions may
 > fail if the KWin version available in the repositories does not meet this requirement.
->
-> For Plasma versions higher than 6.6, use the `kde/plasma-6.7` branch, as this current branch
-> will not work with 6.6.
 
 ```yaml
 sudo apt install \
@@ -129,6 +115,7 @@ the effect:
 ```yaml
 git clone https://github.com/Si13n7/kwin-effects-yet-another-magic-lamp-reloaded.git
 cd kwin-effects-yet-another-magic-lamp-reloaded
+git checkout plasma-6.7
 mkdir build && cd build
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -136,27 +123,6 @@ cmake .. \
 make
 sudo make install
 ```
-
-
-#### Building the effect against older Plasma versions
-
-This fork targets **Plasma 6.6** exclusively. For older Plasma (5.x) releases, use the original repository by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), which provides dedicated branches per Plasma version.
-
-**Step 1** — Clone the original repository:
-
-```yaml
-git clone https://github.com/zzag/kwin-effects-yet-another-magic-lamp.git
-cd kwin-effects-yet-another-magic-lamp
-```
-
-**Step 2** — Check out the branch matching your Plasma version:
-
-```yaml
-git checkout Plasma/5.27
-```
-
-Replace `5.27` with your target version (e.g. `5.24`, `5.23`).
-
 
 ### Using the effect
 
