@@ -14,7 +14,7 @@ This project was originally created by [Vlad Zahorodnii](https://github.com/zzag
 
 ### Installation
 
-#### Quick install
+#### Quick install (Only for kde 6.6)
 
 Clone the repository and run the install script — it will check and install all required dependencies automatically, then build and install the effect.
 
@@ -149,7 +149,9 @@ cd kwin-effects-yet-another-magic-lamp
 **Step 2** — Check out the branch matching your Plasma version:
 
 ```yaml
-git checkout plasma-6.7
+git checkout plasma-6.7 && mkdir build && cd build && cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr && make && sudo make install
 ```
 
 #### Building the effect against older Plasma versions
