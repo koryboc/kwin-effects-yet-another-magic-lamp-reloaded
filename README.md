@@ -1,4 +1,4 @@
-# Yet Another Magic Lamp (Plasma 6.6+)
+# Yet Another Magic Lamp (Plasma 6.6)
 
 <div align="center">
   <a href="https://youtu.be/i8tt4JLWGy8">
@@ -14,7 +14,7 @@ This project was originally created by [Vlad Zahorodnii](https://github.com/zzag
 
 ### Installation
 
-#### Quick install
+#### Quick install (Only for kde 6.6)
 
 Clone the repository and run the install script — it will check and install all required dependencies automatically, then build and install the effect.
 
@@ -57,7 +57,8 @@ sudo pacman -S \
     kcoreaddons \
     kwindowsystem \
     qt6-base \
-    libdrm
+    libdrm \
+    vulkan-headers
 ```
 
 On Fedora → Kinoite, Bazzite, Nobara
@@ -74,7 +75,8 @@ sudo dnf install \
     kf6-kwindowsystem-devel \
     qt6-qtbase-devel \
     libdrm-devel \
-    libepoxy-devel
+    libepoxy-devel \
+    vulkan-headers
 ```
 
 On openSUSE Tumbleweed
@@ -93,13 +95,17 @@ sudo zypper install \
     qt6-base-devel \
     qt6-declarative-devel \
     libdrm-devel \
-    libepoxy-devel
+    libepoxy-devel \
+    vulkan-headers
 ```
 
 On Debian → Kubuntu, KDE neon, MX Linux, Nitrux
 
-> **Note:** This effect requires KWin 6.6 or later. Building on Debian-based distributions may
+> **Note:** This effect requires KWin 6.6. Building on Debian-based distributions may
 > fail if the KWin version available in the repositories does not meet this requirement.
+>
+> For Plasma versions higher than 6.6, use the [`kde/plasma-6.7`](https://github.com/v0id0100/kwin-effects-yet-another-magic-lamp-reloaded/tree/plasma-6.7) branch, as this current branch
+> will not work with 6.6.
 
 ```yaml
 sudo apt install \
@@ -113,7 +119,8 @@ sudo apt install \
     libkf6kcmutils-dev \
     libkf6windowsystem-dev \
     qt6-base-dev \
-    libdrm-dev
+    libdrm-dev \
+    vulkan-headers
 ```
 
 After you installed all the required dependencies, you can build
@@ -130,10 +137,26 @@ make
 sudo make install
 ```
 
+### Building the effect againt higher Plasma version (6.7 ++):
+
+**Step 1** — Clone the original repository:
+
+```yaml
+git clone https://github.com/v0id0100/kwin-effects-yet-another-magic-lamp-reloaded.git
+cd kwin-effects-yet-another-magic-lamp
+```
+
+**Step 2** — Check out the branch matching your Plasma version:
+
+```yaml
+git checkout plasma-6.7 && mkdir build && cd build && cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr && make && sudo make install
+```
 
 #### Building the effect against older Plasma versions
 
-This fork targets **Plasma 6.6 and later** exclusively. For older Plasma (5.x) releases, use the original repository by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), which provides dedicated branches per Plasma version.
+This fork targets **Plasma 6.6** exclusively. For older Plasma (5.x) releases, use the original repository by [zzag](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), which provides dedicated branches per Plasma version.
 
 **Step 1** — Clone the original repository:
 
