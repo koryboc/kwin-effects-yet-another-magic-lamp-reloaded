@@ -142,7 +142,7 @@ sudo make install
 **Step 1** — Clone the original repository:
 
 ```yaml
-git clone https://github.com/zzag/kwin-effects-yet-another-magic-lamp.git
+git clone https://github.com/v0id0100/kwin-effects-yet-another-magic-lamp-reloaded.git
 cd kwin-effects-yet-another-magic-lamp
 ```
 
