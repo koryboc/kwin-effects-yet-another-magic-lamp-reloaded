@@ -49,7 +49,7 @@ if command -v pacman &>/dev/null; then
     pm=pacman
     pkgs=(base-devel cmake extra-cmake-modules kwin
           kconfig kconfigwidgets kcmutils kcoreaddons kwindowsystem
-          qt6-base libdrm)
+          qt6-base libdrm vulkan-headers)
     is_installed() { pacman -Qq "$1" &>/dev/null; }
     do_install()   { sudo pacman -S --needed "${missing[@]}"; }
 elif command -v dnf &>/dev/null; then
@@ -102,17 +102,15 @@ fi
 
 echo -e "\n${ul}${white}Building $repo${nc}\n"
 
-cd "$base"
-[[ -d build ]] || mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+cmake -S "$base" -B "$base/build" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr
+cmake --build "$base/build" --parallel "$(nproc)"
 
-if make -j"$(nproc)"; then
-    if [[ "$EUID" -ne 0 ]]; then
-        sudo make install
-    else
-        make install
-    fi
+if [[ "$EUID" -ne 0 ]]; then
+    sudo cmake --install "$base/build"
+else
+    cmake --install "$base/build"
 fi
 
 echo -e "\n${green}${ol}$(basename "$0")${white}${ol} done!${nc}\n"
