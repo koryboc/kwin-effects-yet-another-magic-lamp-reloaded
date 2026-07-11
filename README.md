@@ -42,6 +42,7 @@ You will need the following dependencies to build this effect:
     - KCMUtils
     - WindowSystem
 * libdrm
+* Vulkan headers
 
 On Arch Linux → Manjaro, EndeavourOS, Garuda Linux, CachyOS
 
@@ -57,7 +58,8 @@ sudo pacman -S \
     kcoreaddons \
     kwindowsystem \
     qt6-base \
-    libdrm
+    libdrm \
+    vulkan-headers
 ```
 
 On Fedora → Kinoite, Bazzite, Nobara
@@ -74,7 +76,8 @@ sudo dnf install \
     kf6-kwindowsystem-devel \
     qt6-qtbase-devel \
     libdrm-devel \
-    libepoxy-devel
+    libepoxy-devel \
+    vulkan-headers
 ```
 
 On openSUSE Tumbleweed
@@ -93,7 +96,8 @@ sudo zypper install \
     qt6-base-devel \
     qt6-declarative-devel \
     libdrm-devel \
-    libepoxy-devel
+    libepoxy-devel \
+    vulkan-headers
 ```
 
 On Debian → Kubuntu, KDE neon, MX Linux, Nitrux
@@ -113,7 +117,8 @@ sudo apt install \
     libkf6kcmutils-dev \
     libkf6windowsystem-dev \
     qt6-base-dev \
-    libdrm-dev
+    libdrm-dev \
+    libvulkan-dev
 ```
 
 After you installed all the required dependencies, you can build
