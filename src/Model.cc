@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2018 Vlad Zagorodniy <vladzzag@gmail.com>
- * Copyright (C) 2026 Roy Schroedel <dev@si13n7.com>
+ * Copyright (C) 2026 Roy Bock <dev@si13n7.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -110,8 +110,7 @@ void Model::start(AnimationKind kind)
             m_stage = AnimationStage::Stretch1;
             m_timeLine.reset();
             m_timeLine.setDirection(KWin::TimeLine::Forward);
-            m_timeLine.setDuration(
-                durationFraction(m_parameters.stretchDuration, m_shapeFactor));
+            m_timeLine.setDuration(durationFraction(m_parameters.stretchDuration, m_shapeFactor));
             m_timeLine.setEasingCurve(QEasingCurve::Linear);
             m_clip = true;
         }
@@ -216,7 +215,7 @@ void Model::updateUnminimizeStage()
         m_timeLine.reset();
         m_timeLine.setDirection(KWin::TimeLine::Backward);
         m_timeLine.setDuration(
-            durationFraction(m_parameters.stretchDuration, m_shapeFactor));
+            durationFraction(m_parameters.unminimizeStretchDuration, m_shapeFactor));
         m_timeLine.setEasingCurve(QEasingCurve::Linear);
         m_clip = false;
         m_done = false;

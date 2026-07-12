@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2018 Vlad Zagorodniy <vladzzag@gmail.com>
- * Copyright (C) 2026 Roy Schroedel <dev@si13n7.com>
+ * Copyright (C) 2026 Roy Bock <dev@si13n7.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -307,10 +307,22 @@ void YetAnotherMagicLampEffect::reconfigure(ReconfigureFlags flags)
 
     const auto baseDuration = KWinCompat::toMilliseconds(
         animationTime<YetAnotherMagicLampConfig>(std::chrono::milliseconds(300)));
-    m_modelParameters.squashDuration = baseDuration;
-    m_modelParameters.stretchDuration = std::chrono::milliseconds(
-        qMax(qRound(baseDuration.count() * 0.7), 1));
-    m_modelParameters.bumpDuration = baseDuration;
+    const auto configuredSquashDuration = YetAnotherMagicLampConfig::squashDuration();
+    m_modelParameters.squashDuration = configuredSquashDuration > 0
+        ? std::chrono::milliseconds(configuredSquashDuration)
+        : baseDuration;
+    const auto configuredStretchDuration = YetAnotherMagicLampConfig::stretchDuration();
+    m_modelParameters.stretchDuration = configuredStretchDuration > 0
+        ? std::chrono::milliseconds(configuredStretchDuration)
+        : std::chrono::milliseconds(qMax(qRound(baseDuration.count() * 0.7), 1));
+    const auto configuredUnminimizeStretchDuration = YetAnotherMagicLampConfig::unminimizeStretchDuration();
+    m_modelParameters.unminimizeStretchDuration = configuredUnminimizeStretchDuration > 0
+        ? std::chrono::milliseconds(configuredUnminimizeStretchDuration)
+        : m_modelParameters.stretchDuration;
+    const auto configuredBumpDuration = YetAnotherMagicLampConfig::bumpDuration();
+    m_modelParameters.bumpDuration = configuredBumpDuration > 0
+        ? std::chrono::milliseconds(configuredBumpDuration)
+        : baseDuration;
     m_modelParameters.shapeFactor = YetAnotherMagicLampConfig::initialShapeFactor();
     m_modelParameters.bumpDistance = YetAnotherMagicLampConfig::maxBumpDistance();
 

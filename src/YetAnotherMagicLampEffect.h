@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2018 Vlad Zagorodniy <vladzzag@gmail.com>
- * Copyright (C) 2026 Roy Schroedel <dev@si13n7.com>
+ * Copyright (C) 2026 Roy Bock <dev@si13n7.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

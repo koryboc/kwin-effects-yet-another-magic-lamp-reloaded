@@ -14,13 +14,12 @@
 #include <chrono>
 #include <type_traits>
 
-namespace KWinCompat
-{
+namespace KWinCompat {
 
-template<typename EffectsHandler>
-QRectF fullScreenArea(EffectsHandler *handler, KWin::LogicalOutput *screen)
+template <typename EffectsHandler>
+QRectF fullScreenArea(EffectsHandler* handler, KWin::LogicalOutput* screen)
 {
-    if constexpr (requires(EffectsHandler *h, KWin::LogicalOutput *s, KWin::VirtualDesktop *desktop) {
+    if constexpr (requires(EffectsHandler* h, KWin::LogicalOutput* s, KWin::VirtualDesktop* desktop) {
                       h->clientArea(KWin::FullScreenArea, s, desktop);
                   }) {
         return handler->clientArea(KWin::FullScreenArea, screen, handler->currentDesktop());
@@ -29,7 +28,7 @@ QRectF fullScreenArea(EffectsHandler *handler, KWin::LogicalOutput *screen)
     }
 }
 
-template<typename T>
+template <typename T>
 std::chrono::milliseconds toMilliseconds(T value)
 {
     using Value = std::remove_cvref_t<T>;
@@ -47,21 +46,21 @@ inline std::chrono::milliseconds monotonicTimestamp()
         std::chrono::steady_clock::now().time_since_epoch());
 }
 
-template<typename EffectsHandler>
-void prePaintScreen(EffectsHandler *handler, KWin::ScreenPrePaintData &data, std::chrono::milliseconds presentTime)
+template <typename EffectsHandler>
+void prePaintScreen(EffectsHandler* handler, KWin::ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
-    if constexpr (requires(EffectsHandler *h) { h->prePaintScreen(data, presentTime); }) {
+    if constexpr (requires(EffectsHandler* h) { h->prePaintScreen(data, presentTime); }) {
         handler->prePaintScreen(data, presentTime);
     } else {
         handler->prePaintScreen(data);
     }
 }
 
-template<typename EffectsHandler>
-void prePaintWindow(EffectsHandler *handler, KWin::RenderView *view, KWin::EffectWindow *window,
-    KWin::WindowPrePaintData &data, std::chrono::milliseconds presentTime)
+template <typename EffectsHandler>
+void prePaintWindow(EffectsHandler* handler, KWin::RenderView* view, KWin::EffectWindow* window,
+    KWin::WindowPrePaintData& data, std::chrono::milliseconds presentTime)
 {
-    if constexpr (requires(EffectsHandler *h) { h->prePaintWindow(view, window, data, presentTime); }) {
+    if constexpr (requires(EffectsHandler* h) { h->prePaintWindow(view, window, data, presentTime); }) {
         handler->prePaintWindow(view, window, data, presentTime);
     } else {
         handler->prePaintWindow(view, window, data);
