@@ -329,6 +329,7 @@ void YetAnotherMagicLampEffect::reconfigure(ReconfigureFlags flags)
     m_gridResolution = YetAnotherMagicLampConfig::gridResolution();
 }
 
+#ifdef KWIN_PREPAINT_HAS_PRESENT_TIME
 void YetAnotherMagicLampEffect::prePaintScreen(KWin::ScreenPrePaintData& data, std::chrono::milliseconds presentTime)
 {
     for (AnimationData& animData : m_animations) {
@@ -340,11 +341,6 @@ void YetAnotherMagicLampEffect::prePaintScreen(KWin::ScreenPrePaintData& data, s
     KWinCompat::prePaintScreen(KWin::effects, data, presentTime);
 }
 
-void YetAnotherMagicLampEffect::prePaintScreen(KWin::ScreenPrePaintData& data)
-{
-    prePaintScreen(data, KWinCompat::monotonicTimestamp());
-}
-
 void YetAnotherMagicLampEffect::prePaintWindow(KWin::RenderView* view, KWin::EffectWindow* w, KWin::WindowPrePaintData& data, std::chrono::milliseconds presentTime)
 {
     if (m_animations.contains(w)) {
@@ -352,11 +348,27 @@ void YetAnotherMagicLampEffect::prePaintWindow(KWin::RenderView* view, KWin::Eff
     }
     KWinCompat::prePaintWindow(KWin::effects, view, w, data, presentTime);
 }
+#else
+void YetAnotherMagicLampEffect::prePaintScreen(KWin::ScreenPrePaintData& data)
+{
+    const auto presentTime = KWinCompat::monotonicTimestamp();
+    for (AnimationData& animData : m_animations) {
+        animData.model.advance(presentTime);
+    }
+
+    data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
+
+    KWinCompat::prePaintScreen(KWin::effects, data, presentTime);
+}
 
 void YetAnotherMagicLampEffect::prePaintWindow(KWin::RenderView* view, KWin::EffectWindow* w, KWin::WindowPrePaintData& data)
 {
-    prePaintWindow(view, w, data, KWinCompat::monotonicTimestamp());
+    if (m_animations.contains(w)) {
+        data.mask |= PAINT_WINDOW_TRANSFORMED;
+    }
+    KWinCompat::prePaintWindow(KWin::effects, view, w, data, KWinCompat::monotonicTimestamp());
 }
+#endif
 
 void YetAnotherMagicLampEffect::postPaintScreen()
 {

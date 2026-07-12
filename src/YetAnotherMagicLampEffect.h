@@ -43,12 +43,15 @@ public:
     void reconfigure(ReconfigureFlags flags) override;
 
     // KWin 6.7 removed the presentation timestamp from the pre-paint hook
-    // signatures. Keep both overloads so the plugin can be built against the
-    // KWin 6.6 and 6.7 effect APIs.
-    void prePaintScreen(KWin::ScreenPrePaintData& data, std::chrono::milliseconds presentTime);
-    void prePaintScreen(KWin::ScreenPrePaintData& data);
-    void prePaintWindow(KWin::RenderView* view, KWin::EffectWindow* w, KWin::WindowPrePaintData& data, std::chrono::milliseconds presentTime);
-    void prePaintWindow(KWin::RenderView* view, KWin::EffectWindow* w, KWin::WindowPrePaintData& data);
+    // signatures. The CMake probe KWIN_PREPAINT_HAS_PRESENT_TIME picks the
+    // signature that matches the installed KWin so `override` stays correct.
+#ifdef KWIN_PREPAINT_HAS_PRESENT_TIME
+    void prePaintScreen(KWin::ScreenPrePaintData& data, std::chrono::milliseconds presentTime) override;
+    void prePaintWindow(KWin::RenderView* view, KWin::EffectWindow* w, KWin::WindowPrePaintData& data, std::chrono::milliseconds presentTime) override;
+#else
+    void prePaintScreen(KWin::ScreenPrePaintData& data) override;
+    void prePaintWindow(KWin::RenderView* view, KWin::EffectWindow* w, KWin::WindowPrePaintData& data) override;
+#endif
     void postPaintScreen() override;
 
     void paintWindow(const KWin::RenderTarget& renderTarget, const KWin::RenderViewport& viewport,
