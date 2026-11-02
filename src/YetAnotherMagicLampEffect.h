@@ -82,6 +82,8 @@ private:
     QMap<KWin::EffectWindow*, AnimationData> m_animations;
     // Windows waiting for iconGeometry to become valid before animation starts
     QMap<KWin::EffectWindow*, KWin::EffectWindowVisibleRef> m_pendingMinimize;
+    // Number of retries spent waiting for a valid iconGeometry, per window
+    QMap<KWin::EffectWindow*, int> m_minimizeRetries;
 };
 
 inline int YetAnotherMagicLampEffect::requestedEffectChainPosition() const
