@@ -51,6 +51,22 @@ try_compile(KWIN_PREPAINT_HAS_PRESENT_TIME
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON)
 
+# KWin 6.8 made Effect::paintWindow return bool ([[nodiscard]]); 6.6 returns void.
+file(WRITE "${CMAKE_BINARY_DIR}/kwin_paintwindow_probe.cc"
+"#include <effect/effect.h>
+struct Probe : KWin::Effect {
+    bool paintWindow(const KWin::RenderTarget&, const KWin::RenderViewport&, KWin::EffectWindow*,
+        int, const KWin::Region&, KWin::WindowPaintData&) override { return true; }
+};
+int main() { return 0; }
+")
+try_compile(KWIN_PAINTWINDOW_RETURNS_BOOL
+    SOURCES "${CMAKE_BINARY_DIR}/kwin_paintwindow_probe.cc"
+    LINK_LIBRARIES KWin::kwin Qt6::Core Qt6::Gui KF6::CoreAddons
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED ON)
+message(STATUS "KWin paintWindow returns bool: ${KWIN_PAINTWINDOW_RETURNS_BOOL}")
+
 add_subdirectory(src)
 
 feature_summary(WHAT ALL)
