@@ -22,10 +22,23 @@
 #include "YetAnotherMagicLampConfig.h"
 #include "kwineffects_interface.h"
 
+// Qt
+#include <QCoreApplication>
+#include <QLocale>
+#include <QTranslator>
+
 YetAnotherMagicLampEffectKCM::YetAnotherMagicLampEffectKCM(QObject* parent, const KPluginMetaData& data)
     : KCModule(parent, data)
     , m_ui(new Ui::YetAnotherMagicLampEffectKCM)
 {
+    // Embedded translations (:/i18n/kwin_yetanothermagiclamp_config_<lang>.qm);
+    // the translator unregisters itself when the KCM is destroyed.
+    auto* translator = new QTranslator(this);
+    if (translator->load(QLocale(), QStringLiteral("kwin_yetanothermagiclamp_config"),
+            QStringLiteral("_"), QStringLiteral(":/i18n"))) {
+        QCoreApplication::installTranslator(translator);
+    }
+
     m_ui->setupUi(widget());
     addConfig(YetAnotherMagicLampConfig::self(), widget());
 }

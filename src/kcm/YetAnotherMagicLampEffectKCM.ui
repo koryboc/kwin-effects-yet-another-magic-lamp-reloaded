@@ -192,6 +192,9 @@
    </item>
    <item row="7" column="0">
     <widget class="QLabel" name="label_InitialShapeFactor">
+     <property name="toolTip">
+      <string>How bent the window is at the very start of the animation: 0 starts straight, higher values start already bent.</string>
+     </property>
      <property name="text">
       <string>Initial shape factor:</string>
      </property>
@@ -199,6 +202,9 @@
    </item>
    <item row="7" column="1">
     <widget class="QDoubleSpinBox" name="kcfg_InitialShapeFactor">
+     <property name="toolTip">
+      <string>How bent the window is at the very start of the animation: 0 starts straight, higher values start already bent.</string>
+     </property>
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
@@ -215,6 +221,9 @@
    </item>
    <item row="8" column="0">
     <widget class="QLabel" name="label_ShapeCurve">
+     <property name="toolTip">
+      <string>How the window bends while it is pulled into the panel.</string>
+     </property>
      <property name="text">
       <string>Shape curve:</string>
      </property>
@@ -222,6 +231,9 @@
    </item>
    <item row="8" column="1">
     <widget class="QComboBox" name="kcfg_ShapeCurve">
+     <property name="toolTip">
+      <string>&lt;b&gt;Linear&lt;/b&gt; – straight wedge, like a trapezoid&lt;br&gt;&lt;b&gt;Quad&lt;/b&gt; – soft bend&lt;br&gt;&lt;b&gt;Cubic&lt;/b&gt; (default) – noticeable neck: wide on top, narrows sharply near the icon&lt;br&gt;&lt;b&gt;Quart, Quint&lt;/b&gt; – even sharper: wide body, thin tail&lt;br&gt;&lt;b&gt;Sine&lt;/b&gt; – smooth S-shape, close to the classic genie effect&lt;br&gt;&lt;b&gt;Circ&lt;/b&gt; – bend along a circular arc, bulging sides&lt;br&gt;&lt;b&gt;Bounce&lt;/b&gt; – wavy, springy sides&lt;br&gt;&lt;b&gt;Bezier&lt;/b&gt; – smooth S-curve, softer at both ends</string>
+     </property>
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
@@ -273,6 +285,19 @@
        <string>Bezier</string>
       </property>
      </item>
+    </widget>
+   </item>
+   <item row="9" column="1">
+    <widget class="QLabel" name="label_ShapeCurveHint">
+     <property name="text">
+      <string>How the window bends while it is pulled into the panel: the outline of the "funnel" from the wide window to the narrow icon. Hover over the list for a description of each shape. Tip: set Duration to about 1000 milliseconds to see the difference clearly.</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
     </widget>
    </item>
   </layout>

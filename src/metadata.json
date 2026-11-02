@@ -8,6 +8,8 @@
         ],
         "Category": "Appearance",
         "Description": "Alternative magic lamp effect",
+        "Description[ru]": "Альтернативный эффект «Волшебная лампа» для сворачивания окон",
+        "Description[uk]": "Альтернативний ефект «Чарівна лампа» для згортання вікон",
         "EnabledByDefault": false,
         "Icon": "preferences-system-windows-effect-yetanothermagiclamp",
         "Id": "kwin4_effect_yetanothermagiclamp",
