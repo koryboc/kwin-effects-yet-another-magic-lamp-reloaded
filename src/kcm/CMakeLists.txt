@@ -7,7 +7,6 @@ kconfig_add_kcfg_files(kcm_SRCS
     ../YetAnotherMagicLampConfig.kcfgc
 )
 
-qt6_wrap_ui(kcm_SRCS YetAnotherMagicLampEffectKCM.ui)
 
 qt6_add_dbus_interface(kcm_SRCS ${KWIN_EFFECTS_INTERFACE} kwineffects_interface)
 

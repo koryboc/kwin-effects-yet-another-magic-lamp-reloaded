@@ -20,6 +20,8 @@
 #include "Model.h"
 #include "kwincompat.h"
 
+#include <cmath>
+
 static inline std::chrono::milliseconds durationFraction(std::chrono::milliseconds duration, qreal fraction)
 {
     return std::chrono::milliseconds(qMax(qRound(duration.count() * fraction), 1));
@@ -83,12 +85,15 @@ static Direction realizeDirection(const KWin::EffectWindow* window, const QRectF
 
 void Model::start(AnimationKind kind)
 {
-    m_kind = kind;
-
-    if (m_timeLine.running()) {
+    // A reversal while flying just turns around; a new request during the
+    // final wobble starts over.
+    if (m_timeLine.running() && m_stage != AnimationStage::Settle) {
+        m_kind = kind;
         m_timeLine.toggleDirection();
         return;
     }
+    m_kind = kind;
+    m_done = false;
 
     if (!m_iconGeometry.isValid()) {
         m_iconGeometry = m_window->iconGeometry();
@@ -100,129 +105,115 @@ void Model::start(AnimationKind kind)
     switch (m_kind) {
     case AnimationKind::Minimize:
         if (m_bumpDistance != 0) {
-            m_stage = AnimationStage::Bump;
-            m_timeLine.reset();
-            m_timeLine.setDirection(KWin::TimeLine::Forward);
-            m_timeLine.setDuration(m_parameters.bumpDuration);
-            m_timeLine.setEasingCurve(QEasingCurve::Linear);
-            m_clip = false;
+            startBump(KWin::TimeLine::Forward);
         } else {
-            m_stage = AnimationStage::Stretch1;
-            m_timeLine.reset();
-            m_timeLine.setDirection(KWin::TimeLine::Forward);
-            m_timeLine.setDuration(durationFraction(m_parameters.stretchDuration, m_shapeFactor));
-            m_timeLine.setEasingCurve(QEasingCurve::Linear);
-            m_clip = true;
+            startTravel(KWin::TimeLine::Forward, false);
         }
         break;
 
     case AnimationKind::Unminimize:
-        m_stage = AnimationStage::Squash;
-        m_timeLine.reset();
-        m_timeLine.setDirection(KWin::TimeLine::Backward);
-        m_timeLine.setDuration(m_parameters.squashDuration);
-        m_timeLine.setEasingCurve(QEasingCurve::Linear);
-        m_clip = true;
+        startTravel(KWin::TimeLine::Backward, true);
         break;
 
     default:
         Q_UNREACHABLE();
     }
+}
+
+void Model::startBump(KWin::TimeLine::Direction direction)
+{
+    m_stage = AnimationStage::Bump;
+    m_timeLine.reset();
+    m_timeLine.setDirection(direction);
+    m_timeLine.setDuration(m_parameters.bumpDuration);
+    m_timeLine.setEasingCurve(QEasingCurve::InOutSine);
+    m_clip = false;
+}
+
+void Model::startTravel(KWin::TimeLine::Direction direction, bool coupledBump)
+{
+    // Stretch and squash run on one timeline so the motion curve applies to
+    // the whole flight. m_split marks where stretching hands over to squashing.
+    const auto stretch = durationFraction(coupledBump ? m_parameters.unminimizeStretchDuration
+                                                      : m_parameters.stretchDuration,
+        m_shapeFactor);
+    const auto squash = std::max(m_parameters.squashDuration, std::chrono::milliseconds(1));
+    m_split = qreal(stretch.count()) / qreal(stretch.count() + squash.count());
+    m_coupledBump = coupledBump;
+    m_stage = AnimationStage::Travel;
+    m_timeLine.reset();
+    m_timeLine.setDirection(direction);
+    m_timeLine.setDuration(stretch + squash);
+    m_timeLine.setEasingCurve(QEasingCurve::Linear); // the motion curve is applied in travelProgress()
+    updateClip();
+}
+
+void Model::startSettleOrFinish()
+{
+    if (m_parameters.spring <= 0.0 || m_parameters.settleDuration.count() <= 0) {
+        m_done = true;
+        return;
+    }
+    m_stage = AnimationStage::Settle;
+    m_timeLine.reset();
+    m_timeLine.setDirection(KWin::TimeLine::Forward);
+    m_timeLine.setDuration(m_parameters.settleDuration);
+    m_timeLine.setEasingCurve(QEasingCurve::Linear);
+    m_clip = false;
+}
+
+qreal Model::travelProgress() const
+{
+    // "Anticipate" (InBack) dips below zero: the window first pulls away from
+    // the icon, and on the way back it overshoots its own size a little.
+    return qBound(-0.15, m_parameters.motionCurve.valueForProgress(m_timeLine.value()), 1.0);
+}
+
+void Model::updateClip()
+{
+    if (m_stage != AnimationStage::Travel) {
+        m_clip = false;
+        return;
+    }
+    // Like the original stages: Stretch1 and Squash clip at the icon edge,
+    // the unminimize stretch (bump returning at the same time) does not.
+    m_clip = !m_coupledBump || travelProgress() >= m_split;
 }
 
 void Model::advance(std::chrono::milliseconds presentTime)
 {
+    if (m_done) {
+        return;
+    }
     m_timeLine.advance(presentTime);
+    updateClip();
     if (!m_timeLine.done()) {
         return;
     }
 
-    switch (m_kind) {
-    case AnimationKind::Minimize:
-        updateMinimizeStage();
-        break;
-
-    case AnimationKind::Unminimize:
-        updateUnminimizeStage();
-        break;
-
-    default:
-        Q_UNREACHABLE();
-    }
-}
-
-void Model::updateMinimizeStage()
-{
+    const bool forward = m_timeLine.direction() == KWin::TimeLine::Forward;
     switch (m_stage) {
     case AnimationStage::Bump:
-        m_stage = AnimationStage::Stretch1;
-        m_timeLine.reset();
-        m_timeLine.setDirection(KWin::TimeLine::Forward);
-        m_timeLine.setDuration(
-            durationFraction(m_parameters.stretchDuration, m_shapeFactor));
-        m_timeLine.setEasingCurve(QEasingCurve::Linear);
-        m_clip = true;
-        m_done = false;
-        return;
-
-    case AnimationStage::Stretch1:
-    case AnimationStage::Stretch2:
-        m_stage = AnimationStage::Squash;
-        m_timeLine.reset();
-        m_timeLine.setDirection(KWin::TimeLine::Forward);
-        m_timeLine.setDuration(m_parameters.squashDuration);
-        m_timeLine.setEasingCurve(QEasingCurve::Linear);
-        m_clip = true;
-        m_done = false;
-        return;
-
-    case AnimationStage::Squash:
-        m_done = true;
-        return;
-
-    default:
-        Q_UNREACHABLE();
-    }
-}
-
-void Model::updateUnminimizeStage()
-{
-    switch (m_stage) {
-    case AnimationStage::Bump:
-        m_done = true;
-        return;
-
-    case AnimationStage::Stretch1:
-        if (m_bumpDistance == 0) {
-            m_done = true;
-            return;
+        if (forward) {
+            startTravel(KWin::TimeLine::Forward, false); // raised: now fly into the icon
+        } else {
+            startSettleOrFinish(); // came back down: fully restored
         }
-        m_stage = AnimationStage::Bump;
-        m_timeLine.reset();
-        m_timeLine.setDirection(KWin::TimeLine::Backward);
-        m_timeLine.setDuration(m_parameters.bumpDuration);
-        m_timeLine.setEasingCurve(QEasingCurve::Linear);
-        m_clip = false;
-        m_done = false;
         return;
 
-    case AnimationStage::Stretch2:
+    case AnimationStage::Travel:
+        if (forward) {
+            m_done = true; // inside the icon
+        } else if (!m_coupledBump && m_bumpDistance != 0) {
+            startBump(KWin::TimeLine::Backward); // reversed minimize: lower it again
+        } else {
+            startSettleOrFinish();
+        }
+        return;
+
+    case AnimationStage::Settle:
         m_done = true;
         return;
-
-    case AnimationStage::Squash:
-        m_stage = AnimationStage::Stretch2;
-        m_timeLine.reset();
-        m_timeLine.setDirection(KWin::TimeLine::Backward);
-        m_timeLine.setDuration(
-            durationFraction(m_parameters.unminimizeStretchDuration, m_shapeFactor));
-        m_timeLine.setEasingCurve(QEasingCurve::Linear);
-        m_clip = false;
-        m_done = false;
-        return;
-
-    default:
-        Q_UNREACHABLE();
     }
 }
 
@@ -239,7 +230,28 @@ struct TransformParameters {
     qreal squashProgress;
     qreal bumpProgress;
     qreal bumpDistance;
+    // sideways extras, in pixels: arc of the neck and cloth ripple
+    qreal bend = 0.0;
+    qreal waveAmplitude = 0.0;
+    qreal waveLength = 1.0;
+    qreal wavePhase = 0.0;
 };
+
+// Sideways offset of an edge that has moved `scale` (0..1) of the way to the
+// icon and sits at `along` on the motion axis. sin(pi * scale) keeps the
+// window body and the very tip at the icon in place; only the neck moves.
+static inline qreal sideShift(const TransformParameters& params, qreal scale, qreal along)
+{
+    const qreal envelope = std::sin(M_PI * qBound(0.0, scale, 1.0));
+    if (envelope <= 0.0) {
+        return 0.0;
+    }
+    qreal shift = params.bend;
+    if (params.waveAmplitude > 0.0) {
+        shift += params.waveAmplitude * std::sin(2.0 * M_PI * along / params.waveLength - params.wavePhase);
+    }
+    return shift * envelope;
+}
 
 static inline qreal interpolate(qreal from, qreal to, qreal t)
 {
@@ -282,6 +294,13 @@ static void transformQuadsLeft(
         quad[3].setX(targetLeftOffset);
         quad[1].setX(targetRightOffset);
         quad[2].setX(targetRightOffset);
+
+        const qreal leftShift = sideShift(params, leftScale, targetLeftOffset);
+        const qreal rightShift = sideShift(params, rightScale, targetRightOffset);
+        quad[0].setY(quad[0].y() + leftShift);
+        quad[3].setY(quad[3].y() + leftShift);
+        quad[1].setY(quad[1].y() + rightShift);
+        quad[2].setY(quad[2].y() + rightShift);
     }
 }
 
@@ -321,6 +340,13 @@ static void transformQuadsTop(
         quad[1].setY(targetTopOffset);
         quad[2].setY(targetBottomOffset);
         quad[3].setY(targetBottomOffset);
+
+        const qreal topShift = sideShift(params, topScale, targetTopOffset);
+        const qreal bottomShift = sideShift(params, bottomScale, targetBottomOffset);
+        quad[0].setX(quad[0].x() + topShift);
+        quad[1].setX(quad[1].x() + topShift);
+        quad[2].setX(quad[2].x() + bottomShift);
+        quad[3].setX(quad[3].x() + bottomShift);
     }
 }
 
@@ -360,6 +386,13 @@ static void transformQuadsRight(
         quad[3].setX(targetLeftOffset);
         quad[1].setX(targetRightOffset);
         quad[2].setX(targetRightOffset);
+
+        const qreal leftShift = sideShift(params, leftScale, targetLeftOffset);
+        const qreal rightShift = sideShift(params, rightScale, targetRightOffset);
+        quad[0].setY(quad[0].y() + leftShift);
+        quad[3].setY(quad[3].y() + leftShift);
+        quad[1].setY(quad[1].y() + rightShift);
+        quad[2].setY(quad[2].y() + rightShift);
     }
 }
 
@@ -399,6 +432,13 @@ static void transformQuadsBottom(
         quad[1].setY(targetTopOffset);
         quad[2].setY(targetBottomOffset);
         quad[3].setY(targetBottomOffset);
+
+        const qreal topShift = sideShift(params, topScale, targetTopOffset);
+        const qreal bottomShift = sideShift(params, bottomScale, targetBottomOffset);
+        quad[0].setX(quad[0].x() + topShift);
+        quad[1].setX(quad[1].x() + topShift);
+        quad[2].setX(quad[2].x() + bottomShift);
+        quad[3].setX(quad[3].x() + bottomShift);
     }
 }
 
@@ -436,70 +476,107 @@ void Model::apply(KWin::WindowQuadList& quads) const
         applyBump(quads);
         break;
 
-    case AnimationStage::Stretch1:
-        applyStretch1(quads);
+    case AnimationStage::Travel:
+        applyTravel(quads);
         break;
 
-    case AnimationStage::Stretch2:
-        applyStretch2(quads);
-        break;
-
-    case AnimationStage::Squash:
-        applySquash(quads);
+    case AnimationStage::Settle:
+        applySettle(quads);
         break;
     }
 }
 
-void Model::applyBump(KWin::WindowQuadList& quads) const
+static TransformParameters baseParameters(const Model::Parameters& p, Direction direction,
+    const QRectF& iconRect, int bumpDistance)
 {
     TransformParameters params;
-    params.shapeCurve = m_parameters.shapeCurve;
-    params.direction = m_direction;
-    params.iconRect = m_iconGeometry;
+    params.shapeCurve = p.shapeCurve;
+    params.direction = direction;
+    params.iconRect = iconRect;
+    params.bumpDistance = bumpDistance;
     params.squashProgress = 0.0;
     params.stretchProgress = 0.0;
+    params.bumpProgress = 0.0;
+    return params;
+}
+
+void Model::applyBump(KWin::WindowQuadList& quads) const
+{
+    TransformParameters params = baseParameters(m_parameters, m_direction, m_iconGeometry, m_bumpDistance);
     params.bumpProgress = m_timeLine.value();
-    params.bumpDistance = m_bumpDistance;
     transformQuads(m_window, params, quads);
 }
 
-void Model::applyStretch1(KWin::WindowQuadList& quads) const
+void Model::applyTravel(KWin::WindowQuadList& quads) const
 {
-    TransformParameters params;
-    params.shapeCurve = m_parameters.shapeCurve;
-    params.direction = m_direction;
-    params.iconRect = m_iconGeometry;
-    params.squashProgress = 0.0;
-    params.stretchProgress = m_shapeFactor * m_timeLine.value();
-    params.bumpProgress = 1.0;
-    params.bumpDistance = m_bumpDistance;
+    TransformParameters params = baseParameters(m_parameters, m_direction, m_iconGeometry, m_bumpDistance);
+    const qreal g = travelProgress();
+    if (g < m_split) {
+        const qreal local = m_split > 0.0 ? g / m_split : 1.0;
+        params.stretchProgress = m_shapeFactor * local;
+        // unminimize: the bump comes back together with the stretch
+        params.bumpProgress = m_coupledBump ? params.stretchProgress : 1.0;
+    } else {
+        const qreal local = m_split < 1.0 ? (g - m_split) / (1.0 - m_split) : 1.0;
+        params.squashProgress = local;
+        params.stretchProgress = qMin(m_shapeFactor + local, 1.0);
+        params.bumpProgress = 1.0;
+    }
+
+    // Sideways extras are measured against the window size, so they look the
+    // same on small and big windows.
+    const QRectF windowRect = m_window->frameGeometry();
+    const bool vertical = m_direction == Direction::Top || m_direction == Direction::Bottom;
+    const qreal across = vertical ? windowRect.width() : windowRect.height();
+    const qreal alongExtent = vertical ? windowRect.height() : windowRect.width();
+    if (!qFuzzyIsNull(m_parameters.neckCurve)) {
+        // bend towards the side the icon is on (or away with negative values)
+        const qreal iconSide = vertical ? m_iconGeometry.center().x() - windowRect.center().x()
+                                        : m_iconGeometry.center().y() - windowRect.center().y();
+        params.bend = m_parameters.neckCurve * 0.35 * across * (iconSide < 0 ? -1.0 : 1.0);
+    }
+    if (m_parameters.wave > 0.0) {
+        params.waveAmplitude = m_parameters.wave * 0.06 * across;
+        params.waveLength = qMax(alongExtent * 0.45, 40.0);
+        params.wavePhase = qMax(g, 0.0) * 3.0 * M_PI;
+    }
     transformQuads(m_window, params, quads);
 }
 
-void Model::applyStretch2(KWin::WindowQuadList& quads) const
+void Model::applySettle(KWin::WindowQuadList& quads) const
 {
-    TransformParameters params;
-    params.shapeCurve = m_parameters.shapeCurve;
-    params.direction = m_direction;
-    params.iconRect = m_iconGeometry;
-    params.squashProgress = 0.0;
-    params.stretchProgress = m_shapeFactor * m_timeLine.value();
-    params.bumpProgress = params.stretchProgress;
-    params.bumpDistance = m_bumpDistance;
-    transformQuads(m_window, params, quads);
+    // A decaying wobble around the window centre: big first swing, then calm.
+    const qreal t = m_timeLine.value();
+    const qreal amount = m_parameters.spring * 0.06 * std::sin(2.0 * M_PI * 1.75 * t) * std::exp(-3.5 * t) * (1.0 - t);
+    if (qFuzzyIsNull(amount)) {
+        return;
+    }
+    const QRectF windowRect = m_window->frameGeometry();
+    const qreal cx = windowRect.width() / 2.0;
+    const qreal cy = windowRect.height() / 2.0;
+    // stretch along the motion axis, squeeze across it: like jelly
+    const bool vertical = m_direction == Direction::Top || m_direction == Direction::Bottom;
+    const qreal sx = vertical ? 1.0 - amount * 0.5 : 1.0 + amount;
+    const qreal sy = vertical ? 1.0 + amount : 1.0 - amount * 0.5;
+    for (int i = 0; i < quads.count(); ++i) {
+        KWin::WindowQuad& quad = quads[i];
+        for (int v = 0; v < 4; ++v) {
+            quad[v].setX(cx + (quad[v].x() - cx) * sx);
+            quad[v].setY(cy + (quad[v].y() - cy) * sy);
+        }
+    }
 }
 
-void Model::applySquash(KWin::WindowQuadList& quads) const
+qreal Model::opacity() const
 {
-    TransformParameters params;
-    params.shapeCurve = m_parameters.shapeCurve;
-    params.direction = m_direction;
-    params.iconRect = m_iconGeometry;
-    params.squashProgress = m_timeLine.value();
-    params.stretchProgress = qMin(m_shapeFactor + params.squashProgress, 1.0);
-    params.bumpProgress = 1.0;
-    params.bumpDistance = m_bumpDistance;
-    transformQuads(m_window, params, quads);
+    if (m_stage != AnimationStage::Travel || m_parameters.fade <= 0.0) {
+        return 1.0;
+    }
+    // fade only in the last part of the flight, smoothly
+    const qreal g = qBound(0.0, travelProgress(), 1.0);
+    const qreal e = qBound(0.0, (g - 0.45) / 0.55, 1.0);
+    const qreal smooth = e * e * (3.0 - 2.0 * e);
+    return 1.0 - m_parameters.fade * smooth;
 }
 
 Model::Parameters Model::parameters() const

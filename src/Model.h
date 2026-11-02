@@ -54,6 +54,24 @@ public:
 
         // How much the transformed window should be raised.
         qreal bumpDistance;
+
+        // Speed profile of the whole flight into/out of the icon. The
+        // stretch and squash parts share one curve, so the speed never jumps
+        // between them.
+        QEasingCurve motionCurve = QEasingCurve(QEasingCurve::Linear);
+
+        // 0..1: springy overshoot when a window comes back (unminimize).
+        qreal spring = 0.0;
+        std::chrono::milliseconds settleDuration = std::chrono::milliseconds(450);
+
+        // 0..1: how much the window fades out as it reaches the icon.
+        qreal fade = 0.0;
+
+        // 0..1: cloth-like ripple along the neck.
+        qreal wave = 0.0;
+
+        // -1..1: the neck bends into an arc instead of a straight funnel.
+        qreal neckCurve = 0.0;
     };
 
     explicit Model(KWin::EffectWindow* window = nullptr);
@@ -135,25 +153,34 @@ public:
      **/
     QRegion clipRegion() const;
 
+    /**
+     * Opacity factor for the window at the current moment (fade option).
+     **/
+    qreal opacity() const;
+
 private:
     void applyBump(KWin::WindowQuadList& quads) const;
-    void applyStretch1(KWin::WindowQuadList& quads) const;
-    void applyStretch2(KWin::WindowQuadList& quads) const;
-    void applySquash(KWin::WindowQuadList& quads) const;
+    void applyTravel(KWin::WindowQuadList& quads) const;
+    void applySettle(KWin::WindowQuadList& quads) const;
 
-    void updateMinimizeStage();
-    void updateUnminimizeStage();
+    void startBump(KWin::TimeLine::Direction direction);
+    void startTravel(KWin::TimeLine::Direction direction, bool coupledBump);
+    void startSettleOrFinish();
+    void updateClip();
+    qreal travelProgress() const; // eased 0..1 (may dip below 0 with "anticipate")
 
     int computeBumpDistance() const;
     qreal computeShapeFactor() const;
 
     Parameters m_parameters;
 
+    // Bump: the window is raised above the panel first.
+    // Travel: stretch + squash into the icon as one continuous flight.
+    // Settle: springy wobble after the window is back (unminimize only).
     enum class AnimationStage {
         Bump,
-        Stretch1,
-        Stretch2,
-        Squash
+        Travel,
+        Settle
     };
 
     KWin::EffectWindow* m_window;
@@ -164,6 +191,8 @@ private:
     Direction m_direction;
     int m_bumpDistance;
     qreal m_shapeFactor;
+    qreal m_split = 0.5;          // part of the flight spent stretching
+    bool m_coupledBump = false;   // unminimize: the bump returns while stretching
     bool m_clip;
     bool m_done = false;
 };
