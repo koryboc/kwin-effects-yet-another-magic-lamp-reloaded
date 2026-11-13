@@ -7,12 +7,16 @@
             }
         ],
         "Category": "Appearance",
-        "Description": "Alternative magic lamp effect",
+        "Description": "Magic lamp minimize effect with presets: genie, springy, jelly, silk, smoke…",
         "EnabledByDefault": false,
         "Icon": "preferences-system-windows-effect-yetanothermagiclamp",
         "Id": "kwin4_effect_yetanothermagiclamp",
         "License": "GPL",
-        "Name": "Yet Another Magic Lamp"
+        "Name": "Yet Another Magic Lamp",
+        "Name[uk]": "Ще одна чарівна лампа",
+        "Name[ru]": "Ещё одна волшебная лампа",
+        "Description[uk]": "Згортання «чарівна лампа» з пресетами: джин, пружний, желе, шовк, димок…",
+        "Description[ru]": "Сворачивание «волшебная лампа» с пресетами: джинн, пружинящий, желе, шёлк, дымка…"
     },
     "org.kde.kwin.effect": {
         "exclusiveGroup": "minimize"

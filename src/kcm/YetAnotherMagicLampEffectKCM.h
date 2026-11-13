@@ -21,18 +21,54 @@
 #include <KCModule>
 #include <KPluginMetaData>
 
-// Auto-generated
-#include "ui_YetAnotherMagicLampEffectKCM.h"
+#include <QByteArray>
+#include <QHash>
+#include <QList>
+#include <QPair>
 
+class QComboBox;
+class QDoubleSpinBox;
+class QLabel;
+class QSlider;
+class QSpinBox;
+
+// The settings page is built in code (not a .ui file) so every text can be
+// switched between English, Ukrainian and Russian on the fly.
 class YetAnotherMagicLampEffectKCM : public KCModule {
     Q_OBJECT
 
 public:
     explicit YetAnotherMagicLampEffectKCM(QObject* parent, const KPluginMetaData& data);
-    ~YetAnotherMagicLampEffectKCM() override;
 
+    void load() override;
     void save() override;
+    void defaults() override;
 
 private:
-    Ui::YetAnotherMagicLampEffectKCM* m_ui;
+    QSpinBox* addDuration(const char* name);
+    QSlider* addPercent(const char* name, int minimum);
+    void addRow(const char* key, QWidget* field);
+    void addSection(const char* key);
+
+    int language() const; // 0 English, 1 Ukrainian, 2 Russian
+    void retranslate();
+    void applyPreset(int index);
+    void syncPresetFromValues();
+
+    QComboBox* m_preset = nullptr;
+    QComboBox* m_language = nullptr;
+    QLabel* m_presetDescription = nullptr;
+    QLabel* m_hint = nullptr;
+    QComboBox* m_shapeCurve = nullptr;
+    QLabel* m_shapeCurveDescription = nullptr;
+    QDoubleSpinBox* m_shapeFactor = nullptr;
+    QComboBox* m_motion = nullptr;
+    QLabel* m_motionDescription = nullptr;
+    QSpinBox* m_maxBump = nullptr;
+    QSpinBox* m_grid = nullptr;
+    QHash<QString, QSpinBox*> m_durations;
+    QHash<QString, QSlider*> m_percents;
+    QHash<QString, QLabel*> m_percentValues;
+    QList<QPair<QLabel*, QByteArray>> m_labels; // label, translation key
+    bool m_applyingPreset = false;
 };

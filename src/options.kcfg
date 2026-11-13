@@ -34,5 +34,43 @@
         <entry name="ShapeCurve" type="Int">
             <default>2</default>
         </entry>
+        <!-- 0 even, 1 accelerate, 2 smooth, 3 decelerate, 4 anticipate -->
+        <entry name="Motion" type="Int">
+            <default>0</default>
+            <min>0</min>
+            <max>4</max>
+        </entry>
+        <!-- percent; springy wobble when a window comes back -->
+        <entry name="Spring" type="Int">
+            <default>0</default>
+            <min>0</min>
+            <max>100</max>
+        </entry>
+        <!-- percent; fade out while reaching the icon -->
+        <entry name="Fade" type="Int">
+            <default>0</default>
+            <min>0</min>
+            <max>100</max>
+        </entry>
+        <!-- percent; cloth-like ripple of the neck -->
+        <entry name="Wave" type="Int">
+            <default>0</default>
+            <min>0</min>
+            <max>100</max>
+        </entry>
+        <!-- percent, -100..100; the neck bends into an arc -->
+        <entry name="NeckCurve" type="Int">
+            <default>0</default>
+            <min>-100</min>
+            <max>100</max>
+        </entry>
+        <!-- settings page only: chosen preset (0 = custom) and language -->
+        <entry name="Preset" type="Int">
+            <default>1</default>
+        </entry>
+        <!-- 0 system, 1 English, 2 Ukrainian, 3 Russian -->
+        <entry name="Language" type="Int">
+            <default>0</default>
+        </entry>
     </group>
 </kcfg>

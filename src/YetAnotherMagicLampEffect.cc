@@ -330,6 +330,35 @@ void YetAnotherMagicLampEffect::reconfigure(ReconfigureFlags flags)
         ? std::chrono::milliseconds(configuredBumpDuration)
         : baseDuration;
     m_modelParameters.shapeFactor = YetAnotherMagicLampConfig::initialShapeFactor();
+
+    // Speed profile of the flight. The timeline runs backwards for
+    // unminimize, so "accelerate into the icon" also means "leave it fast,
+    // then slow down" on the way out.
+    QEasingCurve motion;
+    switch (YetAnotherMagicLampConfig::motion()) {
+    case 1: // accelerate into the icon, like being sucked in
+        motion.setType(QEasingCurve::InQuad);
+        break;
+    case 2: // smooth start and end
+        motion.setType(QEasingCurve::InOutCubic);
+        break;
+    case 3: // fast start, gentle arrival
+        motion.setType(QEasingCurve::OutCubic);
+        break;
+    case 4: // anticipate: a small pull back first
+        motion.setType(QEasingCurve::InBack);
+        motion.setOvershoot(1.2);
+        break;
+    default: // 0: even speed (classic)
+        motion.setType(QEasingCurve::Linear);
+        break;
+    }
+    m_modelParameters.motionCurve = motion;
+    m_modelParameters.spring = qBound(0, YetAnotherMagicLampConfig::spring(), 100) / 100.0;
+    m_modelParameters.settleDuration = std::chrono::milliseconds(qRound(350 + 250 * m_modelParameters.spring));
+    m_modelParameters.fade = qBound(0, YetAnotherMagicLampConfig::fade(), 100) / 100.0;
+    m_modelParameters.wave = qBound(0, YetAnotherMagicLampConfig::wave(), 100) / 100.0;
+    m_modelParameters.neckCurve = qBound(-100, YetAnotherMagicLampConfig::neckCurve(), 100) / 100.0;
     m_modelParameters.bumpDistance = YetAnotherMagicLampConfig::maxBumpDistance();
 
     m_gridResolution = YetAnotherMagicLampConfig::gridResolution();
@@ -397,14 +426,21 @@ YetAnotherMagicLampEffect::PaintWindowResult YetAnotherMagicLampEffect::paintWin
     const KWin::Region& region,
     KWin::WindowPaintData& data)
 {
+    const KWin::Region* paintRegion = &region;
+    KWin::Region clip;
     auto it = m_animations.constFind(w);
-    if (it != m_animations.constEnd() && it->model.needsClip()) {
-        const KWin::Region clipLogical(it->model.clipRegion());
-        const KWin::Region clip = viewport.mapToDeviceCoordinatesAligned(clipLogical);
-        return KWin::effects->paintWindow(renderTarget, viewport, w, mask, clip, data);
+    if (it != m_animations.constEnd()) {
+        if (it->model.needsClip()) {
+            const KWin::Region clipLogical(it->model.clipRegion());
+            clip = viewport.mapToDeviceCoordinatesAligned(clipLogical);
+            paintRegion = &clip;
+        }
+        const qreal opacity = it->model.opacity();
+        if (opacity < 1.0) {
+            data.multiplyOpacity(opacity); // "fade" option
+        }
     }
-
-    return KWin::effects->paintWindow(renderTarget, viewport, w, mask, region, data);
+    return KWin::effects->paintWindow(renderTarget, viewport, w, mask, *paintRegion, data);
 }
 
 void YetAnotherMagicLampEffect::apply(KWin::EffectWindow* window, int mask, KWin::WindowPaintData& data, KWin::WindowQuadList& quads)
