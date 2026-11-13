@@ -182,7 +182,13 @@ static QRectF resolveIconGeometry(KWin::EffectWindow* w)
         targetDock = fallbackDock;
     }
     if (!targetDock) {
-        return iconRect;
+        // No visible panel on this screen (e.g. auto-hidden). Plasma's icon
+        // geometry may point anywhere, possibly near the cursor, so use the
+        // bottom-center of the window's screen instead of the raw rect.
+        const QRectF scr = KWinCompat::fullScreenArea(KWin::effects, primaryScreen);
+        return QRectF(scr.center().x() - iconRect.width() / 2,
+            scr.bottom() - iconRect.height(),
+            iconRect.width(), iconRect.height());
     }
 
     // Translate the icon by the offset between the two screens' origins so that
@@ -460,6 +466,15 @@ void YetAnotherMagicLampEffect::startMinimize(KWin::EffectWindow* w)
         if (m_pendingMinimize.contains(w)) {
             return;
         }
+        // Give up after ~1.5 s so the window is never stuck visible forever;
+        // it then minimizes without animation.
+        constexpr int maxMinimizeRetries = 10;
+        int& retries = m_minimizeRetries[w];
+        if (retries >= maxMinimizeRetries) {
+            m_minimizeRetries.remove(w);
+            return;
+        }
+        ++retries;
         m_pendingMinimize[w] = KWin::EffectWindowVisibleRef(w, KWin::EffectWindow::PAINT_DISABLED_BY_MINIMIZE);
         QPointer<KWin::EffectWindow> weakRef(w);
         QTimer::singleShot(150, this, [this, weakRef]() {
@@ -467,11 +482,14 @@ void YetAnotherMagicLampEffect::startMinimize(KWin::EffectWindow* w)
             m_pendingMinimize.remove(win);
             if (win && win->isMinimized()) {
                 startMinimize(win);
+            } else {
+                m_minimizeRetries.remove(win);
             }
         });
         return;
     }
 
+    m_minimizeRetries.remove(w);
     AnimationData& animData = m_animations[w];
     animData.model.setWindow(w);
     animData.model.setParameters(m_modelParameters);
@@ -509,6 +527,7 @@ void YetAnotherMagicLampEffect::startUnminimize(KWin::EffectWindow* w)
 void YetAnotherMagicLampEffect::slotWindowDeleted(KWin::EffectWindow* w)
 {
     m_pendingMinimize.remove(w);
+    m_minimizeRetries.remove(w);
     m_animations.remove(w);
 }
 
@@ -516,6 +535,7 @@ void YetAnotherMagicLampEffect::slotActiveFullScreenEffectChanged()
 {
     if (KWin::effects->activeFullScreenEffect() != nullptr) {
         m_pendingMinimize.clear();
+        m_minimizeRetries.clear();
         for (auto it = m_animations.constBegin(); it != m_animations.constEnd(); ++it) {
             unredirect(it.key());
         }
