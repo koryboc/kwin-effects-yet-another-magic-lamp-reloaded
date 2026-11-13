@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2018 Vlad Zagorodniy <vladzzag@gmail.com>
+ * Copyright (C) 2026 Roy Bock <dev@si13n7.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,8 +35,8 @@
 
 #include <cmath>
 
-static const char* const kDurationNames[] = {"Duration", "StretchDuration", "UnminimizeStretchDuration",
-    "SquashDuration", "BumpDuration"};
+static const char* const kDurationNames[] = { "Duration", "StretchDuration", "UnminimizeStretchDuration",
+    "SquashDuration", "BumpDuration" };
 
 YetAnotherMagicLampEffectKCM::YetAnotherMagicLampEffectKCM(QObject* parent, const KPluginMetaData& data)
     : KCModule(parent, data)
@@ -56,9 +57,14 @@ YetAnotherMagicLampEffectKCM::YetAnotherMagicLampEffectKCM(QObject* parent, cons
     m_presetDescription->setEnabled(false); // greyed, like a hint
     form->addRow(QString(), m_presetDescription);
 
+    // Manually bound (QComboBox has no Q_PROPERTY for currentData, so
+    // kcfg auto-binding cannot store the language code as a string).
     m_language = new QComboBox(widget());
-    m_language->setObjectName(QStringLiteral("kcfg_Language"));
-    m_language->addItems({QString(), QStringLiteral("English"), QStringLiteral("Українська"), QStringLiteral("Русский")});
+    m_language->addItem(QString(), QString());
+    m_language->addItem(QStringLiteral("English"), QStringLiteral("en"));
+    m_language->addItem(QStringLiteral("Deutsch"), QStringLiteral("de"));
+    m_language->addItem(QStringLiteral("Русский"), QStringLiteral("ru"));
+    m_language->addItem(QStringLiteral("Українська"), QStringLiteral("uk"));
     addRow("language", m_language);
 
     // ---- shape ---------------------------------------------------------------
@@ -127,6 +133,9 @@ YetAnotherMagicLampEffectKCM::YetAnotherMagicLampEffectKCM(QObject* parent, cons
     connect(m_preset, &QComboBox::activated, this, &YetAnotherMagicLampEffectKCM::applyPreset);
     connect(m_preset, &QComboBox::currentIndexChanged, this, &YetAnotherMagicLampEffectKCM::retranslate);
     connect(m_language, &QComboBox::currentIndexChanged, this, &YetAnotherMagicLampEffectKCM::retranslate);
+    connect(m_language, &QComboBox::currentIndexChanged, this, [this]() {
+        setNeedsSave(true);
+    });
     connect(m_shapeCurve, &QComboBox::currentIndexChanged, this, &YetAnotherMagicLampEffectKCM::retranslate);
     connect(m_motion, &QComboBox::currentIndexChanged, this, &YetAnotherMagicLampEffectKCM::retranslate);
     const auto sync = [this]() {
@@ -183,7 +192,7 @@ void YetAnotherMagicLampEffectKCM::addRow(const char* key, QWidget* field)
 {
     auto* label = new QLabel(widget());
     label->setBuddy(field);
-    m_labels.append({label, QByteArray(key)});
+    m_labels.append({ label, QByteArray(key) });
     static_cast<QFormLayout*>(widget()->layout())->addRow(label, field);
 }
 
@@ -194,36 +203,30 @@ void YetAnotherMagicLampEffectKCM::addSection(const char* key)
     font.setBold(true);
     label->setFont(font);
     label->setContentsMargins(0, label->fontMetrics().height() / 2, 0, 0);
-    m_labels.append({label, QByteArray(key)});
+    m_labels.append({ label, QByteArray(key) });
     static_cast<QFormLayout*>(widget()->layout())->addRow(label);
 }
 
-int YetAnotherMagicLampEffectKCM::language() const
+QByteArray YetAnotherMagicLampEffectKCM::language() const
 {
-    switch (m_language ? m_language->currentIndex() : 0) {
-    case 1:
-        return 0;
-    case 2:
-        return 1;
-    case 3:
-        return 2;
-    default: {
-        // "System default": follow the language KDE uses
-        const QString system = QLocale().name();
-        if (system.startsWith(QLatin1String("uk"))) {
-            return 1;
-        }
-        if (system.startsWith(QLatin1String("ru"))) {
-            return 2;
-        }
-        return 0;
+    const QByteArray code = m_language ? m_language->currentData().toString().toLatin1() : QByteArray();
+    if (!code.isEmpty()) {
+        return code;
     }
-    }
+    // "System default": follow the language KDE uses
+    const QString system = QLocale().name();
+    if (system.startsWith(QLatin1String("de")))
+        return "de";
+    if (system.startsWith(QLatin1String("ru")))
+        return "ru";
+    if (system.startsWith(QLatin1String("uk")))
+        return "uk";
+    return "en";
 }
 
 void YetAnotherMagicLampEffectKCM::retranslate()
 {
-    const int lang = language();
+    const QByteArray lang = language();
     for (const auto& entry : std::as_const(m_labels)) {
         entry.first->setText(lampText(entry.second.constData(), lang));
         const QString tip = lampTip(entry.second, lang);
@@ -324,6 +327,12 @@ void YetAnotherMagicLampEffectKCM::syncPresetFromValues()
 void YetAnotherMagicLampEffectKCM::load()
 {
     KCModule::load();
+    const QString code = YetAnotherMagicLampConfig::language();
+    int idx = m_language->findData(code);
+    if (idx < 0) {
+        idx = 0;
+    }
+    m_language->setCurrentIndex(idx);
     syncPresetFromValues();
     retranslate();
 }
@@ -331,12 +340,14 @@ void YetAnotherMagicLampEffectKCM::load()
 void YetAnotherMagicLampEffectKCM::defaults()
 {
     KCModule::defaults();
+    m_language->setCurrentIndex(0);
     syncPresetFromValues();
     retranslate();
 }
 
 void YetAnotherMagicLampEffectKCM::save()
 {
+    YetAnotherMagicLampConfig::setLanguage(m_language->currentData().toString());
     KCModule::save();
     OrgKdeKwinEffectsInterface interface(QStringLiteral("org.kde.KWin"),
         QStringLiteral("/Effects"),

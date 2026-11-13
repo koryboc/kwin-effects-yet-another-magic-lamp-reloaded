@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2018 Vlad Zagorodniy <vladzzag@gmail.com>
+ * Copyright (C) 2026 Roy Bock <dev@si13n7.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +34,7 @@ class QSlider;
 class QSpinBox;
 
 // The settings page is built in code (not a .ui file) so every text can be
-// switched between English, Ukrainian and Russian on the fly.
+// switched between English, Ukrainian, Russian and German on the fly.
 class YetAnotherMagicLampEffectKCM : public KCModule {
     Q_OBJECT
 
@@ -50,7 +51,7 @@ private:
     void addRow(const char* key, QWidget* field);
     void addSection(const char* key);
 
-    int language() const; // 0 English, 1 Ukrainian, 2 Russian
+    QByteArray language() const; // lang code from kLanguageCodes, resolved from the combo box or the system locale
     void retranslate();
     void applyPreset(int index);
     void syncPresetFromValues();

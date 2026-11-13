@@ -1,7 +1,8 @@
 {
     "KPlugin": {
         "Name": "Yet Another Magic Lamp",
-        "Name[uk]": "Ще одна чарівна лампа",
-        "Name[ru]": "Ещё одна волшебная лампа"
+        "Name[de]": "Yet Another Magic Lamp",
+        "Name[ru]": "Ещё одна волшебная лампа",
+        "Name[uk]": "Ще одна чарівна лампа"
     }
 }

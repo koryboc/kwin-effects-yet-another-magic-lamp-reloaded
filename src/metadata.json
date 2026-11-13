@@ -2,21 +2,27 @@
     "KPlugin": {
         "Authors": [
             {
+                "Email": "koryboc@hotmail.com",
+                "Name": "Roy Bock"
+            },
+            {
                 "Email": "vladzzag@gmail.com",
                 "Name": "Vlad Zagorodniy"
             }
         ],
         "Category": "Appearance",
-        "Description": "Magic lamp minimize effect with presets: genie, springy, jelly, silk, smoke…",
+        "Description": "Minimizes windows with a configurable magic-lamp effect that animates them into their application icon on the panel.",
+        "Description[de]": "Minimiert Fenster mit einem konfigurierbaren Wunderlampen-Effekt, bei dem sie animiert in das jeweilige Anwendungssymbol in der Leiste gezogen werden.",
+        "Description[ru]": "Сворачивает окна настраиваемым эффектом волшебной лампы, анимированно втягивающим их в соответствующий значок приложения на панели.",
+        "Description[uk]": "Згортає вікна за допомогою налаштовуваного ефекту чарівної лампи, який анімовано втягує їх у відповідний значок застосунку на панелі.",
         "EnabledByDefault": false,
         "Icon": "preferences-system-windows-effect-yetanothermagiclamp",
         "Id": "kwin4_effect_yetanothermagiclamp",
         "License": "GPL",
         "Name": "Yet Another Magic Lamp",
-        "Name[uk]": "Ще одна чарівна лампа",
+        "Name[de]": "Yet Another Magic Lamp",
         "Name[ru]": "Ещё одна волшебная лампа",
-        "Description[uk]": "Згортання «чарівна лампа» з пресетами: джин, пружний, желе, шовк, димок…",
-        "Description[ru]": "Сворачивание «волшебная лампа» с пресетами: джинн, пружинящий, желе, шёлк, дымка…"
+        "Name[uk]": "Ще одна чарівна лампа"
     },
     "org.kde.kwin.effect": {
         "exclusiveGroup": "minimize"

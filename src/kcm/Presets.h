@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <QByteArray>
 #include <QString>
 
 // One complete look. Durations of 0 mean "KWin's default speed".
@@ -18,207 +19,251 @@ struct LampPreset {
     int maxBumpDistance, gridResolution;
     double shapeFactor;
     int shapeCurve; // 0 Linear .. 8 Bezier
-    int motion;     // 0 even, 1 accelerate, 2 smooth, 3 decelerate, 4 anticipate
+    int motion; // 0 even, 1 accelerate, 2 smooth, 3 decelerate, 4 anticipate
     int spring, fade, wave, neckCurve; // percent
 };
 
 // Index 0 in the list is "Custom"; presets start at 1 (same as the config value).
 inline constexpr LampPreset kPresets[] = {
-    {"classic", 0, 0, 0, 0, 0, 30, 0.20, 2, 0, 0, 0, 0, 0},
-    {"genie", 200, 200, 260, 0, 0, 40, 0.35, 5, 1, 0, 0, 0, 0},
-    {"soft", 300, 300, 380, 220, 20, 40, 0.25, 5, 2, 0, 25, 0, 0},
-    {"fast", 110, 110, 150, 0, 0, 24, 0.30, 2, 1, 0, 0, 0, 0},
-    {"springy", 220, 200, 260, 180, 30, 36, 0.25, 2, 2, 60, 0, 0, 0},
-    {"jelly", 260, 240, 300, 0, 0, 48, 0.25, 4, 4, 100, 0, 30, 0},
-    {"ghost", 260, 260, 320, 0, 0, 30, 0.25, 5, 3, 0, 100, 0, 0},
-    {"silk", 300, 300, 360, 0, 0, 60, 0.30, 5, 2, 0, 0, 55, 0},
-    {"whirl", 220, 220, 280, 0, 0, 48, 0.30, 1, 1, 0, 0, 0, 70},
-    {"smoke", 280, 260, 340, 0, 0, 48, 0.30, 5, 3, 0, 70, 25, -30},
+    { "classic", 0, 0, 0, 0, 0, 30, 0.20, 2, 0, 0, 0, 0, 0 },
+    { "genie", 200, 200, 260, 0, 0, 40, 0.35, 5, 1, 0, 0, 0, 0 },
+    { "soft", 300, 300, 380, 220, 20, 40, 0.25, 5, 2, 0, 25, 0, 0 },
+    { "fast", 110, 110, 150, 0, 0, 24, 0.30, 2, 1, 0, 0, 0, 0 },
+    { "springy", 220, 200, 260, 180, 30, 36, 0.25, 2, 2, 60, 0, 0, 0 },
+    { "jelly", 260, 240, 300, 0, 0, 48, 0.25, 4, 4, 100, 0, 30, 0 },
+    { "ghost", 260, 260, 320, 0, 0, 30, 0.25, 5, 3, 0, 100, 0, 0 },
+    { "silk", 300, 300, 360, 0, 0, 60, 0.30, 5, 2, 0, 0, 55, 0 },
+    { "whirl", 220, 220, 280, 0, 0, 48, 0.30, 1, 1, 0, 0, 0, 70 },
+    { "smoke", 280, 260, 340, 0, 0, 48, 0.30, 5, 3, 0, 70, 25, -30 },
 };
 inline constexpr int kPresetCount = int(sizeof(kPresets) / sizeof(kPresets[0]));
 
-// 0 English, 1 Ukrainian, 2 Russian
+// Order of columns in every LampText::text below. Add a new language by
+// appending one code here AND one extra string at the same position in every
+// entry.
+inline constexpr const char* kLanguageCodes[] = { "en", "de", "ru", "uk" };
+inline constexpr int kLanguageCount = int(sizeof(kLanguageCodes) / sizeof(kLanguageCodes[0]));
+
 struct LampText {
     const char* key;
-    const char* text[3];
+    const char* text[kLanguageCount];
 };
 
 // clang-format off
 inline constexpr LampText kTexts[] = {
-    {"preset",        {"Preset:", "Пресет:", "Пресет:"}},
-    {"language",      {"Language:", "Мова:", "Язык:"}},
-    {"system",        {"System default", "Як у системі", "Как в системе"}},
-    {"custom",        {"Custom", "Власний", "Свой"}},
+    {"preset",        {"Preset:", "Vorlage:", "Пресет:", "Пресет:"}},
+    {"language",      {"Language:", "Sprache:", "Язык:", "Мова:"}},
+    {"system",        {"System default", "Systemstandard", "Как в системе", "Як у системі"}},
+    {"custom",        {"Custom", "Benutzerdefiniert", "Свой", "Власний"}},
     {"custom_desc",   {"Your own combination of the settings below.",
-                       "Ваше власне поєднання налаштувань нижче.",
-                       "Ваше собственное сочетание настроек ниже."}},
-    {"classic",       {"Classic", "Класичний", "Классический"}},
+                       "Ihre eigene Kombination der Einstellungen unten.",
+                       "Ваше собственное сочетание настроек ниже.",
+                       "Ваше власне поєднання налаштувань нижче."}},
+    {"classic",       {"Classic", "Klassisch", "Классический", "Класичний"}},
     {"classic_desc",  {"The original Yet Another Magic Lamp.",
-                       "Оригінальний Yet Another Magic Lamp.",
-                       "Оригинальный Yet Another Magic Lamp."}},
-    {"genie",         {"Genie (macOS-like)", "Джин (як у macOS)", "Джинн (как в macOS)"}},
+                       "Das originale Yet Another Magic Lamp.",
+                       "Оригинальный Yet Another Magic Lamp.",
+                       "Оригінальний Yet Another Magic Lamp."}},
+    {"genie",         {"Genie (macOS-like)", "Genie (wie macOS)", "Джинн (как в macOS)", "Джин (як у macOS)"}},
     {"genie_desc",    {"Narrow neck, the window speeds up as it is sucked into the panel.",
-                       "Вузька шия, вікно розганяється, коли його затягує в панель.",
-                       "Узкая шея, окно разгоняется, когда его затягивает в панель."}},
-    {"soft",          {"Soft", "М'який", "Мягкий"}},
+                       "Schmaler Hals, das Fenster beschleunigt, während es in die Leiste gesogen wird.",
+                       "Узкая шея, окно разгоняется, когда его затягивает в панель.",
+                       "Вузька шия, вікно розганяється, коли його затягує в панель."}},
+    {"soft",          {"Soft", "Weich", "Мягкий", "М'який"}},
     {"soft_desc",     {"Slow and smooth, with a gentle lift and a little fading.",
-                       "Повільно й плавно, з легким підйомом і трохи згасає.",
-                       "Медленно и плавно, с лёгким подъёмом и немного гаснет."}},
-    {"fast",          {"Fast", "Швидкий", "Быстрый"}},
+                       "Langsam und sanft, mit leichtem Anheben und etwas Ausblenden.",
+                       "Медленно и плавно, с лёгким подъёмом и немного гаснет.",
+                       "Повільно й плавно, з легким підйомом і трохи згасає."}},
+    {"fast",          {"Fast", "Schnell", "Быстрый", "Швидкий"}},
     {"fast_desc",     {"Quick and snappy, for everyday work.",
-                       "Швидко й чітко, для щоденної роботи.",
-                       "Быстро и чётко, для ежедневной работы."}},
-    {"springy",       {"Springy", "Пружний", "Пружинящий"}},
+                       "Schnell und knackig, für den Alltag.",
+                       "Быстро и чётко, для ежедневной работы.",
+                       "Швидко й чітко, для щоденної роботи."}},
+    {"springy",       {"Springy", "Federnd", "Пружинящий", "Пружний"}},
     {"springy_desc",  {"Windows bounce a little when they come back.",
-                       "Вікна трохи пружинять, коли повертаються.",
-                       "Окна немного пружинят, когда возвращаются."}},
-    {"jelly",         {"Jelly", "Желе", "Желе"}},
+                       "Fenster federn leicht, wenn sie zurückkehren.",
+                       "Окна немного пружинят, когда возвращаются.",
+                       "Вікна трохи пружинять, коли повертаються."}},
+    {"jelly",         {"Jelly", "Wackelpudding", "Желе", "Желе"}},
     {"jelly_desc",    {"A pull back before the jump, a wobbly neck and a strong wobble on return.",
-                       "Замах перед стрибком, хвиляста шия і сильне тремтіння при поверненні.",
-                       "Замах перед прыжком, волнистая шея и сильное дрожание при возвращении."}},
-    {"ghost",         {"Ghost", "Привид", "Призрак"}},
+                       "Ein Ausholen vor dem Sprung, ein wackelnder Hals und starkes Wackeln bei der Rückkehr.",
+                       "Замах перед прыжком, волнистая шея и сильное дрожание при возвращении.",
+                       "Замах перед стрибком, хвиляста шия і сильне тремтіння при поверненні."}},
+    {"ghost",         {"Ghost", "Geist", "Призрак", "Привид"}},
     {"ghost_desc",    {"The window melts away as it reaches the panel.",
-                       "Вікно тане, коли долітає до панелі.",
-                       "Окно тает, когда долетает до панели."}},
-    {"silk",          {"Silk", "Шовк", "Шёлк"}},
+                       "Das Fenster löst sich auf, wenn es die Leiste erreicht.",
+                       "Окно тает, когда долетает до панели.",
+                       "Вікно тане, коли долітає до панелі."}},
+    {"silk",          {"Silk", "Seide", "Шёлк", "Шовк"}},
     {"silk_desc",     {"The neck ripples like fabric in the wind.",
-                       "Шия хвилюється, як тканина на вітрі.",
-                       "Шея колышется, как ткань на ветру."}},
-    {"whirl",         {"Whirlwind", "Вихор", "Вихрь"}},
+                       "Der Hals wellt sich wie Stoff im Wind.",
+                       "Шея колышется, как ткань на ветру.",
+                       "Шия хвилюється, як тканина на вітрі."}},
+    {"whirl",         {"Whirlwind", "Wirbelwind", "Вихрь", "Вихор"}},
     {"whirl_desc",    {"The neck curves in an arc towards the icon.",
-                       "Шия вигинається дугою в бік іконки.",
-                       "Шея изгибается дугой в сторону иконки."}},
-    {"smoke",         {"Smoke", "Димок", "Дымка"}},
+                       "Der Hals krümmt sich im Bogen zum Symbol.",
+                       "Шея изгибается дугой в сторону иконки.",
+                       "Шия вигинається дугою в бік іконки."}},
+    {"smoke",         {"Smoke", "Rauch", "Дымка", "Димок"}},
     {"smoke_desc",    {"A curved, rippling neck that fades like smoke.",
-                       "Вигнута хвиляста шия, що розвіюється, як дим.",
-                       "Изогнутая волнистая шея, которая рассеивается, как дым."}},
+                       "Ein gekrümmter, wellender Hals, der wie Rauch verweht.",
+                       "Изогнутая волнистая шея, которая рассеивается, как дым.",
+                       "Вигнута хвиляста шия, що розвіюється, як дим."}},
 
-    {"sec_shape",     {"Shape", "Форма", "Форма"}},
-    {"sec_motion",    {"Motion", "Рух", "Движение"}},
-    {"sec_timing",    {"Timing", "Тривалість", "Длительность"}},
-    {"sec_advanced",  {"Advanced", "Додатково", "Дополнительно"}},
+    {"sec_shape",     {"Shape", "Form", "Форма", "Форма"}},
+    {"sec_motion",    {"Motion", "Bewegung", "Движение", "Рух"}},
+    {"sec_timing",    {"Timing", "Dauer", "Длительность", "Тривалість"}},
+    {"sec_advanced",  {"Advanced", "Erweitert", "Дополнительно", "Додатково"}},
 
-    {"ShapeCurve",          {"Neck shape:", "Форма шиї:", "Форма шеи:"}},
-    {"InitialShapeFactor",  {"Initial neck width:", "Початкова ширина шиї:", "Начальная ширина шеи:"}},
-    {"NeckCurve",           {"Neck bend:", "Вигин шиї:", "Изгиб шеи:"}},
-    {"Wave",                {"Ripple:", "Хвиля:", "Волна:"}},
-    {"Fade",                {"Fade out:", "Згасання:", "Затухание:"}},
-    {"Motion",              {"Speed profile:", "Характер руху:", "Характер движения:"}},
-    {"Spring",              {"Spring on restore:", "Пружність при розгортанні:", "Пружинистость при разворачивании:"}},
-    {"Duration",            {"Overall duration:", "Загальна тривалість:", "Общая длительность:"}},
-    {"StretchDuration",     {"Stretch:", "Розтягування:", "Растяжение:"}},
-    {"UnminimizeStretchDuration", {"Stretch on restore:", "Розтягування при розгортанні:", "Растяжение при разворачивании:"}},
-    {"SquashDuration",      {"Squash:", "Стискання:", "Сжатие:"}},
-    {"BumpDuration",        {"Lift:", "Підйом:", "Подъём:"}},
-    {"MaxBumpDistance",     {"Lift height:", "Висота підйому:", "Высота подъёма:"}},
-    {"GridResolution",      {"Mesh detail:", "Деталізація сітки:", "Детализация сетки:"}},
+    {"ShapeCurve",          {"Neck shape:", "Halsform:", "Форма шеи:", "Форма шиї:"}},
+    {"InitialShapeFactor",  {"Initial neck width:", "Anfängliche Halsbreite:", "Начальная ширина шеи:", "Початкова ширина шиї:"}},
+    {"NeckCurve",           {"Neck bend:", "Halskrümmung:", "Изгиб шеи:", "Вигин шиї:"}},
+    {"Wave",                {"Ripple:", "Welle:", "Волна:", "Хвиля:"}},
+    {"Fade",                {"Fade out:", "Ausblenden:", "Затухание:", "Згасання:"}},
+    {"Motion",              {"Speed profile:", "Geschwindigkeitsprofil:", "Характер движения:", "Характер руху:"}},
+    {"Spring",              {"Spring on restore:", "Federung beim Wiederherstellen:", "Пружинистость при разворачивании:", "Пружність при розгортанні:"}},
+    {"Duration",            {"Overall duration:", "Gesamtdauer:", "Общая длительность:", "Загальна тривалість:"}},
+    {"StretchDuration",     {"Stretch:", "Strecken:", "Растяжение:", "Розтягування:"}},
+    {"UnminimizeStretchDuration", {"Stretch on restore:", "Strecken beim Wiederherstellen:", "Растяжение при разворачивании:", "Розтягування при розгортанні:"}},
+    {"SquashDuration",      {"Squash:", "Stauchen:", "Сжатие:", "Стискання:"}},
+    {"BumpDuration",        {"Lift:", "Anheben:", "Подъём:", "Підйом:"}},
+    {"MaxBumpDistance",     {"Lift height:", "Anhebehöhe:", "Высота подъёма:", "Висота підйому:"}},
+    {"GridResolution",      {"Mesh detail:", "Netzdetail:", "Детализация сетки:", "Деталізація сітки:"}},
 
-    {"curve0", {"Linear", "Лінійна", "Линейная"}},
-    {"curve1", {"Quadratic", "Квадратична", "Квадратичная"}},
-    {"curve2", {"Cubic", "Кубічна", "Кубическая"}},
-    {"curve3", {"Quartic", "Четвертого степеня", "Четвёртой степени"}},
-    {"curve4", {"Quintic", "П'ятого степеня", "Пятой степени"}},
-    {"curve5", {"Sine", "Синусоїда", "Синусоида"}},
-    {"curve6", {"Circular", "Колова", "Круговая"}},
-    {"curve7", {"Bounce", "Стрибки", "Прыжки"}},
-    {"curve8", {"Bezier", "Безьє", "Безье"}},
+    {"curve0", {"Linear", "Linear", "Линейная", "Лінійна"}},
+    {"curve1", {"Quadratic", "Quadratisch", "Квадратичная", "Квадратична"}},
+    {"curve2", {"Cubic", "Kubisch", "Кубическая", "Кубічна"}},
+    {"curve3", {"Quartic", "Vierten Grades", "Четвёртой степени", "Четвертого степеня"}},
+    {"curve4", {"Quintic", "Fünften Grades", "Пятой степени", "П'ятого степеня"}},
+    {"curve5", {"Sine", "Sinus", "Синусоида", "Синусоїда"}},
+    {"curve6", {"Circular", "Kreisförmig", "Круговая", "Колова"}},
+    {"curve7", {"Bounce", "Sprünge", "Прыжки", "Стрибки"}},
+    {"curve8", {"Bezier", "Bézier", "Безье", "Безьє"}},
 
-    {"motion0", {"Even (classic)", "Рівномірно (класично)", "Равномерно (классически)"}},
-    {"motion1", {"Accelerate into the panel", "З розгоном у панель", "С разгоном в панель"}},
-    {"motion2", {"Smooth start and end", "Плавно на початку й наприкінці", "Плавно в начале и в конце"}},
-    {"motion3", {"Fast start, gentle arrival", "Швидкий старт, м'яке прибуття", "Быстрый старт, мягкое прибытие"}},
-    {"motion4", {"Anticipate (pull back first)", "Із замахом", "С замахом"}},
+    {"motion0", {"Even (classic)", "Gleichmäßig (klassisch)", "Равномерно (классически)", "Рівномірно (класично)"}},
+    {"motion1", {"Accelerate into the panel", "In die Leiste beschleunigen", "С разгоном в панель", "З розгоном у панель"}},
+    {"motion2", {"Smooth start and end", "Sanfter Start und sanftes Ende", "Плавно в начале и в конце", "Плавно на початку й наприкінці"}},
+    {"motion3", {"Fast start, gentle arrival", "Schneller Start, sanfte Ankunft", "Быстрый старт, мягкое прибытие", "Швидкий старт, м'яке прибуття"}},
+    {"motion4", {"Anticipate (pull back first)", "Mit Ausholen", "С замахом", "Із замахом"}},
 
-    {"default", {"Default", "Типово", "По умолчанию"}},
-    {"off",     {"Off", "Вимк.", "Выкл."}},
-    {"ms",      {" ms", " мс", " мс"}},
-    {"px",      {" px", " пкс", " пкс"}},
+    {"default", {"Default", "Standard", "По умолчанию", "Типово"}},
+    {"off",     {"Off", "Aus", "Выкл.", "Вимк."}},
+    {"ms",      {" ms", " ms", " мс", " мс"}},
+    {"px",      {" px", " px", " пкс", " пкс"}},
     {"hint",    {"Press Apply, then minimize any window to see it.",
-                 "Натисніть «Застосувати» і згорніть будь-яке вікно, щоб побачити.",
-                 "Нажмите «Применить» и сверните любое окно, чтобы увидеть."}},
+                 "Klicken Sie auf „Anwenden“ und minimieren Sie ein Fenster, um es zu sehen.",
+                 "Нажмите «Применить» и сверните любое окно, чтобы увидеть.",
+                 "Натисніть «Застосувати» і згорніть будь-яке вікно, щоб побачити."}},
 
     // Descriptions: "<key>_tip" is the tooltip of a row (label and field) or
     // of a combo box item; the selected curve/motion is also shown below it.
     {"ShapeCurve_tip",         {"Outline of the window's neck while it is pulled into the panel.",
-                                "Обрис «шиї» вікна, поки його втягує в панель.",
-                                "Очертание «шеи» окна, пока его втягивает в панель."}},
+                                "Umriss des Fensterhalses, während es in die Leiste gezogen wird.",
+                                "Очертание «шеи» окна, пока его втягивает в панель.",
+                                "Обрис «шиї» вікна, поки його втягує в панель."}},
     {"InitialShapeFactor_tip", {"How narrowed the window already is when the animation starts: 0 starts from the full window, higher values start with a funnel.",
-                                "Наскільки вікно вже звужене на початку анімації: 0 — починає з повного вікна, більші значення — одразу з «лійкою».",
-                                "Насколько окно уже сужено в начале анимации: 0 — начинает с полного окна, большие значения — сразу с «воронкой»."}},
+                                "Wie stark das Fenster zu Beginn der Animation bereits verengt ist: 0 beginnt beim vollen Fenster, höhere Werte starten direkt mit einem Trichter.",
+                                "Насколько окно уже сужено в начале анимации: 0 — начинает с полного окна, большие значения — сразу с «воронкой».",
+                                "Наскільки вікно вже звужене на початку анімації: 0 — починає з повного вікна, більші значення — одразу з «лійкою»."}},
     {"NeckCurve_tip",          {"Bends the neck into an arc instead of a straight funnel; negative values bend it the other way. 0 = straight.",
-                                "Вигинає шию дугою замість прямої «лійки»; від'ємні значення — в інший бік. 0 — пряма.",
-                                "Изгибает шею дугой вместо прямой «воронки»; отрицательные значения — в другую сторону. 0 — прямая."}},
+                                "Krümmt den Hals zu einem Bogen statt zu einem geraden Trichter; negative Werte krümmen in die andere Richtung. 0 = gerade.",
+                                "Изгибает шею дугой вместо прямой «воронки»; отрицательные значения — в другую сторону. 0 — прямая.",
+                                "Вигинає шию дугою замість прямої «лійки»; від'ємні значення — в інший бік. 0 — пряма."}},
     {"Wave_tip",               {"Cloth-like ripple running along the neck. 0 = off.",
-                                "Хвиля вздовж шиї, як тканина на вітрі. 0 — вимкнено.",
-                                "Волна вдоль шеи, как ткань на ветру. 0 — выключено."}},
+                                "Stoffartige Welle, die den Hals entlangläuft. 0 = aus.",
+                                "Волна вдоль шеи, как ткань на ветру. 0 — выключено.",
+                                "Хвиля вздовж шиї, як тканина на вітрі. 0 — вимкнено."}},
     {"Fade_tip",               {"How much the window fades out as it reaches the panel. 0 = stays opaque, 100 % = disappears completely.",
-                                "Наскільки вікно зникає, підлітаючи до панелі. 0 — лишається непрозорим, 100 % — зникає повністю.",
-                                "Насколько окно исчезает, подлетая к панели. 0 — остаётся непрозрачным, 100 % — исчезает полностью."}},
+                                "Wie stark das Fenster ausblendet, während es die Leiste erreicht. 0 = bleibt deckend, 100 % = verschwindet vollständig.",
+                                "Насколько окно исчезает, подлетая к панели. 0 — остаётся непрозрачным, 100 % — исчезает полностью.",
+                                "Наскільки вікно зникає, підлітаючи до панелі. 0 — лишається непрозорим, 100 % — зникає повністю."}},
     {"Motion_tip",             {"How the speed changes during the flight. On restore it plays in reverse.",
-                                "Як змінюється швидкість під час польоту. При розгортанні — у зворотному порядку.",
-                                "Как меняется скорость во время полёта. При разворачивании — в обратном порядке."}},
+                                "Wie sich die Geschwindigkeit während des Fluges ändert. Beim Wiederherstellen rückwärts.",
+                                "Как меняется скорость во время полёта. При разворачивании — в обратном порядке.",
+                                "Як змінюється швидкість під час польоту. При розгортанні — у зворотному порядку."}},
     {"Spring_tip",             {"The window wobbles a little when it comes back from the panel. 0 = off.",
-                                "Вікно трохи пружинить, коли повертається з панелі. 0 — вимкнено.",
-                                "Окно немного пружинит, когда возвращается из панели. 0 — выключено."}},
+                                "Das Fenster federt leicht, wenn es aus der Leiste zurückkehrt. 0 = aus.",
+                                "Окно немного пружинит, когда возвращается из панели. 0 — выключено.",
+                                "Вікно трохи пружинить, коли повертається з панелі. 0 — вимкнено."}},
     {"Duration_tip",           {"Length of the whole animation. \"Default\" uses KWin's animation speed and the phases below.",
-                                "Тривалість усієї анімації. «Типово» — за швидкістю анімацій KWin і фазами нижче.",
-                                "Длительность всей анимации. «По умолчанию» — по скорости анимаций KWin и фазам ниже."}},
+                                "Länge der gesamten Animation. „Standard“ nutzt die Animationsgeschwindigkeit von KWin und die Phasen unten.",
+                                "Длительность всей анимации. «По умолчанию» — по скорости анимаций KWin и фазам ниже.",
+                                "Тривалість усієї анімації. «Типово» — за швидкістю анімацій KWin і фазами нижче."}},
     {"StretchDuration_tip",    {"Phase in which the window stretches into the neck when minimizing.",
-                                "Фаза, коли вікно витягується в «шию» під час згортання.",
-                                "Фаза, когда окно вытягивается в «шею» при сворачивании."}},
+                                "Phase, in der sich das Fenster beim Minimieren in den Hals streckt.",
+                                "Фаза, когда окно вытягивается в «шею» при сворачивании.",
+                                "Фаза, коли вікно витягується в «шию» під час згортання."}},
     {"UnminimizeStretchDuration_tip", {"The same stretch phase when the window is restored.",
-                                "Та сама фаза розтягування, коли вікно розгортається.",
-                                "Та же фаза растяжения, когда окно разворачивается."}},
+                                "Dieselbe Streckphase beim Wiederherstellen des Fensters.",
+                                "Та же фаза растяжения, когда окно разворачивается.",
+                                "Та сама фаза розтягування, коли вікно розгортається."}},
     {"SquashDuration_tip",     {"Phase in which the stretched window is squeezed into the icon.",
-                                "Фаза, коли витягнуте вікно стискається в значок.",
-                                "Фаза, когда вытянутое окно сжимается в значок."}},
+                                "Phase, in der das gestreckte Fenster in das Symbol gestaucht wird.",
+                                "Фаза, когда вытянутое окно сжимается в значок.",
+                                "Фаза, коли витягнуте вікно стискається в значок."}},
     {"BumpDuration_tip",       {"Phase in which the window lifts off the panel edge before flying.",
-                                "Фаза, коли вікно піднімається над краєм панелі перед польотом.",
-                                "Фаза, когда окно поднимается над краем панели перед полётом."}},
+                                "Phase, in der sich das Fenster vor dem Flug vom Leistenrand abhebt.",
+                                "Фаза, когда окно поднимается над краем панели перед полётом.",
+                                "Фаза, коли вікно піднімається над краєм панелі перед польотом."}},
     {"MaxBumpDistance_tip",    {"How high the window lifts above the panel at most.",
-                                "Наскільки найвище вікно піднімається над панеллю.",
-                                "Насколько максимально окно поднимается над панелью."}},
+                                "Wie hoch sich das Fenster maximal über die Leiste hebt.",
+                                "Насколько максимально окно поднимается над панелью.",
+                                "Наскільки найвище вікно піднімається над панеллю."}},
     {"GridResolution_tip",     {"How finely the window is split for bending. Higher = smoother curves, slightly more GPU work.",
-                                "Наскільки дрібно вікно ділиться для вигину. Більше — плавніші криві, трохи більше роботи для GPU.",
-                                "Насколько мелко окно делится для изгиба. Больше — более плавные кривые, чуть больше работы для GPU."}},
+                                "Wie fein das Fenster zum Verbiegen unterteilt wird. Höher = glattere Kurven, etwas mehr GPU-Last.",
+                                "Насколько мелко окно делится для изгиба. Больше — более плавные кривые, чуть больше работы для GPU.",
+                                "Наскільки дрібно вікно ділиться для вигину. Більше — плавніші криві, трохи більше роботи для GPU."}},
 
-    {"curve0_tip", {"Straight wedge, like a trapezoid.", "Рівний клин, як трапеція.", "Ровный клин, как трапеция."}},
-    {"curve1_tip", {"Soft bend.", "М'який вигин.", "Мягкий изгиб."}},
+    {"curve0_tip", {"Straight wedge, like a trapezoid.", "Gerader Keil, wie ein Trapez.", "Ровный клин, как трапеция.", "Рівний клин, як трапеція."}},
+    {"curve1_tip", {"Soft bend.", "Sanfter Bogen.", "Мягкий изгиб.", "М'який вигин."}},
     {"curve2_tip", {"Noticeable neck: wide on top, narrows sharply near the icon.",
-                    "Помітна «шия»: угорі широке, біля значка різко звужується.",
-                    "Заметная «шея»: вверху широкое, у значка резко сужается."}},
-    {"curve3_tip", {"Even sharper: wide body, thin tail.", "Ще різкіше: широке «тіло», тонкий «хвіст».", "Ещё резче: широкое «тело», тонкий «хвост»."}},
-    {"curve4_tip", {"The sharpest: the window stays wide almost to the end.", "Найрізкіша: вікно лишається широким майже до кінця.", "Самая резкая: окно остаётся широким почти до конца."}},
-    {"curve5_tip", {"Smooth S-shape, closest to the classic genie effect.", "Плавна S-подібна, найближча до класичного ефекту «джина».", "Плавная S-образная, ближе всего к классическому эффекту «джинна»."}},
-    {"curve6_tip", {"Bend along a circular arc, bulging sides.", "Вигин по дузі кола, опуклі боки.", "Изгиб по дуге окружности, выпуклые бока."}},
-    {"curve7_tip", {"Wavy, springy sides.", "Хвилясті, пружні боки.", "Волнистые, пружинящие бока."}},
-    {"curve8_tip", {"Smooth S-curve, softer at both ends.", "Плавна S-крива, м'якша на обох кінцях.", "Плавная S-кривая, мягче на обоих концах."}},
+                    "Deutlicher Hals: oben breit, verengt sich beim Symbol stark.",
+                    "Заметная «шея»: вверху широкое, у значка резко сужается.",
+                    "Помітна «шия»: угорі широке, біля значка різко звужується."}},
+    {"curve3_tip", {"Even sharper: wide body, thin tail.", "Noch schärfer: breiter Körper, dünner Schwanz.", "Ещё резче: широкое «тело», тонкий «хвост».", "Ще різкіше: широке «тіло», тонкий «хвіст»."}},
+    {"curve4_tip", {"The sharpest: the window stays wide almost to the end.", "Am schärfsten: Das Fenster bleibt fast bis zum Ende breit.", "Самая резкая: окно остаётся широким почти до конца.", "Найрізкіша: вікно лишається широким майже до кінця."}},
+    {"curve5_tip", {"Smooth S-shape, closest to the classic genie effect.", "Sanfte S-Form, am nächsten am klassischen Genie-Effekt.", "Плавная S-образная, ближе всего к классическому эффекту «джинна».", "Плавна S-подібна, найближча до класичного ефекту «джина»."}},
+    {"curve6_tip", {"Bend along a circular arc, bulging sides.", "Bogen entlang eines Kreises, gewölbte Seiten.", "Изгиб по дуге окружности, выпуклые бока.", "Вигин по дузі кола, опуклі боки."}},
+    {"curve7_tip", {"Wavy, springy sides.", "Wellige, federnde Seiten.", "Волнистые, пружинящие бока.", "Хвилясті, пружні боки."}},
+    {"curve8_tip", {"Smooth S-curve, softer at both ends.", "Sanfte S-Kurve, weicher an beiden Enden.", "Плавная S-кривая, мягче на обоих концах.", "Плавна S-крива, м'якша на обох кінцях."}},
 
-    {"motion0_tip", {"The same speed all the way.", "Однакова швидкість усю дорогу.", "Одинаковая скорость всю дорогу."}},
-    {"motion1_tip", {"Starts slowly and speeds up, as if sucked into the panel.", "Рушає повільно й розганяється, ніби його засмоктує в панель.", "Трогается медленно и разгоняется, будто его засасывает в панель."}},
-    {"motion2_tip", {"Speeds up gently and slows down before the end.", "М'яко розганяється й пригальмовує перед кінцем.", "Мягко разгоняется и притормаживает перед концом."}},
-    {"motion3_tip", {"Leaves quickly and arrives softly.", "Швидко рушає й м'яко прибуває.", "Быстро трогается и мягко прибывает."}},
-    {"motion4_tip", {"A small pull back first, then the flight.", "Спершу невеликий замах назад, потім політ.", "Сначала небольшой замах назад, затем полёт."}},
+    {"motion0_tip", {"The same speed all the way.", "Durchgehend dieselbe Geschwindigkeit.", "Одинаковая скорость всю дорогу.", "Однакова швидкість усю дорогу."}},
+    {"motion1_tip", {"Starts slowly and speeds up, as if sucked into the panel.", "Beginnt langsam und beschleunigt, als würde es in die Leiste gesogen.", "Трогается медленно и разгоняется, будто его засасывает в панель.", "Рушає повільно й розганяється, ніби його засмоктує в панель."}},
+    {"motion2_tip", {"Speeds up gently and slows down before the end.", "Beschleunigt sanft und bremst vor dem Ende ab.", "Мягко разгоняется и притормаживает перед концом.", "М'яко розганяється й пригальмовує перед кінцем."}},
+    {"motion3_tip", {"Leaves quickly and arrives softly.", "Startet schnell und kommt sanft an.", "Быстро трогается и мягко прибывает.", "Швидко рушає й м'яко прибуває."}},
+    {"motion4_tip", {"A small pull back first, then the flight.", "Zuerst ein kleines Ausholen, dann der Flug.", "Сначала небольшой замах назад, затем полёт.", "Спершу невеликий замах назад, потім політ."}},
 };
 // clang-format on
 
+inline int langIndex(const QByteArray& code)
+{
+    for (int i = 0; i < kLanguageCount; ++i) {
+        if (code == kLanguageCodes[i]) {
+            return i;
+        }
+    }
+    return 0; // first entry (English) is the fallback
+}
+
 // Description for a key, or an empty string when there is none.
-inline QString lampTip(const QByteArray& key, int lang)
+inline QString lampTip(const QByteArray& key, const QByteArray& lang)
 {
     const QByteArray tipKey = key + "_tip";
+    const int idx = langIndex(lang);
     for (const LampText& t : kTexts) {
         if (qstrcmp(t.key, tipKey.constData()) == 0) {
-            return QString::fromUtf8(t.text[lang]);
+            return QString::fromUtf8(t.text[idx]);
         }
     }
     return QString();
 }
 
-inline QString lampText(const char* key, int lang)
+inline QString lampText(const char* key, const QByteArray& lang)
 {
+    const int idx = langIndex(lang);
     for (const LampText& t : kTexts) {
         if (qstrcmp(t.key, key) == 0) {
-            return QString::fromUtf8(t.text[lang]);
+            return QString::fromUtf8(t.text[idx]);
         }
     }
     return QString::fromLatin1(key);

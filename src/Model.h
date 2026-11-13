@@ -191,8 +191,8 @@ private:
     Direction m_direction;
     int m_bumpDistance;
     qreal m_shapeFactor;
-    qreal m_split = 0.5;          // part of the flight spent stretching
-    bool m_coupledBump = false;   // unminimize: the bump returns while stretching
+    qreal m_split = 0.5; // part of the flight spent stretching
+    bool m_coupledBump = false; // unminimize: the bump returns while stretching
     bool m_clip;
     bool m_done = false;
 };

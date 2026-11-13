@@ -68,9 +68,9 @@
         <entry name="Preset" type="Int">
             <default>1</default>
         </entry>
-        <!-- 0 system, 1 English, 2 Ukrainian, 3 Russian -->
-        <entry name="Language" type="Int">
-            <default>0</default>
+        <!-- language code: "" = system, "en", "de", "uk", "ru" -->
+        <entry name="Language" type="String">
+            <default></default>
         </entry>
     </group>
 </kcfg>
