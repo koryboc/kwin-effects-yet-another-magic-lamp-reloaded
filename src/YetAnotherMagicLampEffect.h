@@ -54,7 +54,14 @@ public:
 #endif
     void postPaintScreen() override;
 
-    void paintWindow(const KWin::RenderTarget& renderTarget, const KWin::RenderViewport& viewport,
+    // KWin 6.8 changed paintWindow to return bool; KWIN_PAINTWINDOW_RETURNS_BOOL
+    // is set by a CMake probe so the override matches the installed KWin.
+#ifdef KWIN_PAINTWINDOW_RETURNS_BOOL
+    using PaintWindowResult = bool;
+#else
+    using PaintWindowResult = void;
+#endif
+    PaintWindowResult paintWindow(const KWin::RenderTarget& renderTarget, const KWin::RenderViewport& viewport,
         KWin::EffectWindow* w, int mask, const KWin::Region& region,
         KWin::WindowPaintData& data) override;
 
