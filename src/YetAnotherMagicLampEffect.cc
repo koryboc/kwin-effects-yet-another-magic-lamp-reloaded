@@ -34,6 +34,58 @@
 #include <cmath>
 
 // Returns which screen edge a dock panel is closest to.
+static QRectF getTargetIconRect(KWin::EffectWindow* w)
+{
+    if (w->iconGeometry().isValid() && !w->iconGeometry().isEmpty()) {
+        return w->iconGeometry();
+    }
+
+    KWin::EffectWindow* curr = w->transientFor();
+    for (int i = 0; i < 10 && curr; ++i) {
+        if (curr->iconGeometry().isValid() && !curr->iconGeometry().isEmpty()) {
+            return curr->iconGeometry();
+        }
+        curr = curr->transientFor();
+    }
+
+    const QString wClass = w->windowClass().split(QLatin1Char(' ')).first().toLower();
+    for (KWin::EffectWindow* cand : KWin::effects->stackingOrder()) {
+        if (cand == w) continue;
+        if (!cand->iconGeometry().isValid()) continue;
+        if (cand->iconGeometry().isEmpty()) continue;
+
+        const QString cClass = cand->windowClass().split(QLatin1Char(' ')).first().toLower();
+        if (w->pid() > 0 && cand->pid() == w->pid()) {
+            return cand->iconGeometry();
+        }
+        if (!wClass.isEmpty() && cClass == wClass) {
+            return cand->iconGeometry();
+        }
+    }
+
+    KWin::LogicalOutput* scr = KWin::effects->screenAt(w->frameGeometry().center().toPoint());
+    KWin::EffectWindow* bottomDock = nullptr;
+    for (KWin::EffectWindow* cand : KWin::effects->stackingOrder()) {
+        if (cand->isDock() && KWin::effects->screenAt(cand->frameGeometry().center().toPoint()) == scr) {
+            if (!bottomDock) {
+                bottomDock = cand;
+            } else if (cand->frameGeometry().bottom() > bottomDock->frameGeometry().bottom()) {
+                bottomDock = cand;
+            }
+        }
+    }
+    if (bottomDock) {
+        const QRectF d = bottomDock->frameGeometry();
+        return QRectF(d.center().x() - 18, d.top() + (d.height() - 36) / 2, 36, 36);
+    }
+
+    if (scr) {
+        const QRectF r = KWinCompat::fullScreenArea(KWin::effects, scr);
+        return QRectF(r.center().x() - 24, r.bottom() - 48, 48, 48);
+    }
+    return QRectF();
+}
+
 static Direction dockEdge(KWin::EffectWindow* dock)
 {
     KWin::LogicalOutput* screen = KWin::effects->screenAt(
@@ -71,7 +123,7 @@ static Direction dockEdge(KWin::EffectWindow* dock)
 // the target panel — exact for identical panel layouts, reasonable otherwise.
 static QRectF resolveIconGeometry(KWin::EffectWindow* w)
 {
-    const QRectF iconRect = w->iconGeometry();
+    const QRectF iconRect = getTargetIconRect(w);
 
     // Window center determines the authoritative screen (robust against decorations
     // extending a few pixels into an adjacent screen).
@@ -494,7 +546,7 @@ void YetAnotherMagicLampEffect::startMinimize(KWin::EffectWindow* w)
         return;
     }
 
-    const QRectF iconRect = w->iconGeometry();
+    const QRectF iconRect = getTargetIconRect(w);
     if (!iconRect.isValid()) {
         // On Wayland secondary screens the Plasma taskbar sets iconGeometry
         // asynchronously (after QML layout). Keep the window visible and retry
@@ -544,7 +596,7 @@ void YetAnotherMagicLampEffect::startUnminimize(KWin::EffectWindow* w)
         return;
     }
 
-    const QRectF iconRect = w->iconGeometry();
+    const QRectF iconRect = getTargetIconRect(w);
     if (!iconRect.isValid()) {
         return;
     }
