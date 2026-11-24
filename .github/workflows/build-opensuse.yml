@@ -12,8 +12,8 @@ jobs:
     container: opensuse/tumbleweed
 
     steps:
-      - name: Update system
-        run: zypper --non-interactive refresh && zypper --non-interactive update
+      - name: Refresh repositories
+        run: zypper --non-interactive --gpg-auto-import-keys refresh || true
 
       - name: Checkout
         uses: actions/checkout@v4
