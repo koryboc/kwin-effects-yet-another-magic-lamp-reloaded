@@ -63,7 +63,12 @@ if [[ -f /etc/NIXOS ]] || grep -qi 'ID=nixos' /etc/os-release 2>/dev/null; then
     fi
 
     flake="$base/flake.nix"
-    trap 'rm -f "$flake" "$base/flake.lock"; rm -rf "$base/result"' EXIT
+    cleanup_nix() {
+        rm -f "$flake" "$base/flake.lock"
+        rm -rf "$base/result"
+        git -C "$base" reset -- flake.nix flake.lock &>/dev/null || true
+    }
+    trap cleanup_nix EXIT
 
     cat > "$flake" <<'EOF'
 {
@@ -100,6 +105,7 @@ if [[ -f /etc/NIXOS ]] || grep -qi 'ID=nixos' /etc/os-release 2>/dev/null; then
 }
 EOF
 
+    git -C "$base" add -N flake.nix 2>/dev/null || true
     nix --extra-experimental-features 'nix-command flakes' \
         build --print-build-logs "$base#default"
 
