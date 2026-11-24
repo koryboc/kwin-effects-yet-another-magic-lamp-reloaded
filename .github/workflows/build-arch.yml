@@ -15,16 +15,8 @@ jobs:
       - name: Update system
         run: pacman -Syu --noconfirm
 
-      - name: Install dependencies
-        run: pacman -S --noconfirm --needed
-          base-devel cmake extra-cmake-modules kwin qt6-base kcmutils
-          kconfig kconfigwidgets kcoreaddons kwindowsystem libdrm vulkan-headers
-
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
-
-      - name: Build
-        run: cmake --build build --parallel
+      - name: Run install.sh
+        run: ./install.sh

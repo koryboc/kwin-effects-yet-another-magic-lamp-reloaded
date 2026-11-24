@@ -15,17 +15,8 @@ jobs:
       - name: Update system
         run: dnf update -y
 
-      - name: Install dependencies
-        run: dnf install -y
-          cmake extra-cmake-modules kf6-kconfig-devel kf6-kconfigwidgets-devel
-          kf6-kcoreaddons-devel kf6-kcmutils-devel kf6-kwindowsystem-devel
-          kwin-devel qt6-qtbase-devel libdrm-devel libepoxy-devel vulkan-headers
-
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
-
-      - name: Build
-        run: cmake --build build --parallel
+      - name: Run install.sh
+        run: ./install.sh
