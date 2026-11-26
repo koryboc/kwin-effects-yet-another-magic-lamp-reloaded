@@ -12,6 +12,15 @@ Yet Another Magic Lamp is a window minimization effect for KWin. Whenever a wind
 
 This project was originally created by [Vlad Zahorodnii](https://github.com/zzag/kwin-effects-yet-another-magic-lamp), who maintained it through Plasma 5.27. Since the original repository has not been updated in several years, this fork continues development independently, focusing exclusively on Wayland under Plasma 6. X11 is no longer supported.
 
+Plasma 6.8 is the tested target. Plasma 6.6 and 6.7 should still work from the same source, but are no longer tested.
+
+### Features
+
+- **Presets** — ten ready-made looks (Classic, Genie, Soft, Fast, Springy, Jelly, Ghost, Silk, Whirlwind, Smoke) or your own custom combination
+- **Animation options** — shape curve, motion profile, spring on restore, fade, neck wave, neck curve, and separate durations for bump, stretch and squash
+- **Settings page** — every option comes with a description; English, German, Russian and Ukrainian, switchable on the page
+- **Multi-monitor aware** — finds the right panel across screens; with no visible panel (e.g. auto-hidden), windows minimize to the bottom center of the screen
+
 ### Installation
 
 #### Quick install
@@ -25,7 +34,17 @@ chmod +x ./install.sh
 ./install.sh
 ```
 
-Supports Arch Linux, Fedora, openSUSE Tumbleweed, and Debian, as well as most distributions based on these.
+Supports Arch Linux, Debian, Fedora, openSUSE Tumbleweed and NixOS (user-level install into `~/.local`), as well as most distributions based on these.
+
+Alternatively, download `auto_install_yet-another-magic-lamp.sh` from the [latest release](https://github.com/koryboc/kwin-effects-yet-another-magic-lamp-reloaded/releases/latest) and run it — it clones the repository and runs `install.sh` for you.
+
+> **Note:** The install script always tracks the dependencies of the latest supported Plasma version. On older Plasma versions it may install packages that are not strictly needed, and future changes could break the build there.
+
+| Plasma | Dependency differences |
+|--------|------------------------|
+| 6.6    | Vulkan headers are installed but not needed |
+| 6.7    | None — Vulkan headers are required from this version on |
+| 6.8    | None |
 
 #### Build from source
 
@@ -162,8 +181,8 @@ Open **System Settings** and navigate to:
 
 **Animations** → **Window minimize**
 
-Select **"Yet Another Magic Lamp"** and click **Apply**.
+Select **"Yet Another Magic Lamp"** and click **Apply**. Click the configure button next to it to pick a preset or fine-tune the animation; changes apply immediately.
 
 ### Contributing
 
-Contributions are welcome. For suggestions or ideas, please open an issue. For code contributions, run `clang-format` before submitting a pull request.
+Contributions are welcome. For suggestions or ideas, please open an issue. For code contributions, run `clang-format` before submitting a pull request. Translations into further languages are welcome as well — see `src/kcm/Presets.h`.
